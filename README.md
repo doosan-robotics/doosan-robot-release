@@ -8,29 +8,44 @@
   #### [Usage](#chapter-3)
 
 # *build* <a id="chapter-2"></a>
-    mkdir -p dr_ws/src & cd dr_ws/src
-    git clone or download & unzip
-    cd ..
-    rosdep install --from-paths rs --ignore-src --rosdistro kinetic -r -y 
+    mkdir -p /home/<user_home>/catkin_ws/src
+    cd /home/<user_home>/catkin_ws/src
+    catkin_init_workspace
+    git clone https://github.com/doosan-robotics/doosan-robot
+    rosdep install --from-paths doosan-robot --ignore-src --rosdistro kinetic -r -y 
     catkin_make
     source ./devel/setup.bash
-#### package list
-    sudo apt-get install ros-kinetic-rqt*
-    sudo apt-get install ros-kinetic-moveit*
-    sudo apt-get install ros-kinetic-industrial-core
-    sudo apt-get install ros-kinetic-gazebo-ros-control
-    sudo apt-get install ros-kinetic-joint-state-controller 
-    sudo apt-get install ros-kinetic-effort-controllers 
-    sudo apt-get install ros-kinetic-position-controllers 
-    sudo apt-get install ros-kinetic-ros-controllers
-    sudo apt-get install ros-kinetic-ros-control
-    sudo apt-get install ros-kinetic-serial
-    sudo apt-get install ros-kinetic-lms1xx
-    sudo apt-get install ros-kinetic-interactive-marker-twist-server
-    sudo apt-get install ros-kinetic-twist-mux
-    sudo apt-get install ros-kinetic-imu-tools
-    sudo apt-get install ros-kinetic-controller-manager
-    sudo apt-get install ros-kinetic-robot-localization
+#### package list(Internal)
+    doosan_robot        ## metapackage
+    doosan_robotics     ## metapackage
+    dsr_description     ## include URDF, models and description launch files
+    dsr_control         ## main-control node(with doosan controller)
+    dsr_bringup         ## include hardware information -------- not using
+    dsr_example         ## example in ROS envrionment
+    dsr_gripper         ## include robotiq_2f_gripper`s description (more gripper will be added)
+    dsr_launcher        ## can launch rviz or gazebo simulator with doosan-robot
+    dsr_msgs            ## msg and srv files
+    moveit_config_m0609 ## moveit for doosan-robot
+    moveit_config_m0617 ## moveit for doosan-robot
+    moveit_config_m1013 ## moveit for doosan-robot
+    moveit_config_m1509 ## moveit for doosan-robot
+#### package list(External)
+    ros-kinetic-rqt*
+    ros-kinetic-moveit*
+    ros-kinetic-industrial-core
+    ros-kinetic-gazebo-ros-control
+    ros-kinetic-joint-state-controller 
+    ros-kinetic-effort-controllers 
+    ros-kinetic-position-controllers 
+    ros-kinetic-ros-controllers
+    ros-kinetic-ros-control
+    ros-kinetic-serial
+    ros-kinetic-lms1xx
+    ros-kinetic-interactive-marker-twist-server
+    ros-kinetic-twist-mux
+    ros-kinetic-imu-tools
+    ros-kinetic-controller-manager
+    ros-kinetic-robot-localization
 
 # *usage* <a id="chapter-3"></a>
 #### dsr_description
