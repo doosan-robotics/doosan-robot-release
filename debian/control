@@ -1,0 +1,12 @@
+Source: ros-kinetic-dsr-example-cpp
+Section: misc
+Priority: extra
+Maintainer: Doosan Robotics <ros.robotics@doosan.com>
+Build-Depends: debhelper (>= 9.0.0), ros-kinetic-catkin, ros-kinetic-roscpp, ros-kinetic-serial, ros-kinetic-std-msgs
+Homepage: http://wiki.ros.org/doosan_robotics
+Standards-Version: 3.9.2
+
+Package: ros-kinetic-dsr-example-cpp
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-kinetic-roscpp, ros-kinetic-serial, ros-kinetic-std-msgs
+Description: The dsr_example C++ package
