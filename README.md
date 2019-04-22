@@ -1,3 +1,39 @@
+## doosan_robot (kinetic) - 0.9.6-1
+
+The packages in the `doosan_robot` repository were released into the `kinetic` distro by running `/usr/bin/bloom-release --rosdistro kinetic --track kinetic doosan_robot` on `Mon, 22 Apr 2019 01:56:47 -0000`
+
+These packages were released:
+- `doosan_robot`
+- `doosan_robotics`
+- `dsr_control`
+- `dsr_description`
+- `dsr_example_cpp`
+- `dsr_example_py`
+- `dsr_gazebo`
+- `dsr_launcher`
+- `dsr_msgs`
+- `moveit_config_m0609`
+- `moveit_config_m0617`
+- `moveit_config_m1013`
+- `moveit_config_m1509`
+
+Version of package(s) in repository `doosan_robot`:
+
+- upstream repository: https://github.com/doosan-robotics/doosan-robot.git
+- release repository: unknown
+- rosdistro version: `null`
+- old version: `0.9.5-0`
+- new version: `0.9.6-1`
+
+Versions of tools used:
+
+- bloom version: `0.8.0`
+- catkin_pkg version: `0.4.11`
+- rosdep version: `0.15.1`
+- rosdistro version: `0.7.3`
+- vcstools version: `0.1.40`
+
+
 ## doosan-robot (kinetic) - 0.9.5-0
 
 The packages in the `doosan-robot` repository were released into the `kinetic` distro by running `/usr/bin/bloom-release --rosdistro kinetic --track kinetic doosan-robot` on `Tue, 02 Apr 2019 05:55:08 -0000`
