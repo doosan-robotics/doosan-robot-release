@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>dsr_example_py</name>
-  <version>0.9.5</version>
+  <version>0.9.6</version>
   <description>The dsr_example Python package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
@@ -60,7 +60,9 @@
 
   <build_export_depend>rospy</build_export_depend>
   <exec_depend>rospy</exec_depend>
- 
+  <build_depend>dsr_msgs</build_depend>
+  <build_export_depend>dsr_msgs</build_export_depend>
+  <exec_depend>dsr_msgs</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
