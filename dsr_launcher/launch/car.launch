@@ -3,7 +3,7 @@
 <launch>
   <arg name="gui"   default="true"/>
   <arg name="rviz"  default="true"/>
-  <arg name="world" default="car.world"/>
+  <arg name="world" default="empty.world"/>
 
   <arg name="host1" default="127.0.0.1"/>
   <arg name="host2" default="127.0.0.1"/>

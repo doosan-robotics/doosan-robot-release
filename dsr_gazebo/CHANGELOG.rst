@@ -2,6 +2,14 @@
 Changelog for package dsr_gazebo
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.9.5 (2019-04-22)
+------------------
+* edit dsr_gazebo CmakeList.txt
+* update multinode gripper and delete dsr bringup
+* 20190403 update
+* 20190403 update
+* Contributors: doosan-robotics
+
 0.9.4 (2019-04-01)
 ------------------
 * Emulator commit
