@@ -2,6 +2,12 @@
 Changelog for package moveit_config_m1509
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.9.5 (2019-04-22)
+------------------
+* 20190403 update
+* 20190403 update
+* Contributors: doosan-robotics
+
 0.9.4 (2019-04-01)
 ------------------
 * Emulator commit
