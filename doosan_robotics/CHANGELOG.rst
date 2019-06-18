@@ -2,6 +2,14 @@
 Changelog for package doosan_robotics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.9.8 (2019-06-18)
+------------------
+
+0.9.7 (2019-06-17)
+------------------
+* .cpp example is no longer supported
+* Contributors: doosan-robotics
+
 0.9.5 (2019-04-22)
 ------------------
 * edit dsr_msgs

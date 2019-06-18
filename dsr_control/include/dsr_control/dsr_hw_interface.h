@@ -57,6 +57,18 @@
 #include <dsr_msgs/RobotStop.h>
 
 // service
+//system
+#include <dsr_msgs/SetRobotMode.h>
+#include <dsr_msgs/GetRobotMode.h>
+#include <dsr_msgs/SetRobotSystem.h>
+#include <dsr_msgs/GetRobotSystem.h>
+#include <dsr_msgs/SetRobotSpeedMode.h>
+#include <dsr_msgs/GetRobotSpeedMode.h>
+#include <dsr_msgs/GetCurrentPose.h>
+#include <dsr_msgs/GetCurrentSolutionSpace.h>
+#include <dsr_msgs/SetSafeStopResetType.h>
+#include <dsr_msgs/GetLastAlarm.h>
+
 // motion
 #include <dsr_msgs/MoveJoint.h>
 #include <dsr_msgs/MoveLine.h>
@@ -68,6 +80,7 @@
 #include <dsr_msgs/MoveSpiral.h>
 #include <dsr_msgs/MovePeriodic.h>
 #include <dsr_msgs/MoveWait.h>
+#include <dsr_msgs/Jog.h>
 //io
 #include <dsr_msgs/SetCtrlBoxDigitalOutput.h>
 #include <dsr_msgs/GetCtrlBoxDigitalInput.h>
@@ -89,6 +102,7 @@
 #include <dsr_msgs/DrlStart.h>
 #include <dsr_msgs/DrlStop.h>
 #include <dsr_msgs/DrlResume.h>
+#include <dsr_msgs/GetDrlState.h>
 
 
 //tcp
@@ -142,13 +156,45 @@ typedef struct {
     char    strRobotState[MAX_SYMBOL_SIZE];
     float   fCurrentPosj[NUM_JOINT];
     float   fCurrentPosx[NUM_TASK];
-    int     nIoControlBox;
-    //io_modbus           # GJH
-    //error               # GJH
+
+    int     nActualMode;
+    int     nActualSpace;
+    
+    float   fJointAbs[NUM_JOINT];
+    float   fJointErr[NUM_JOINT];
+    float   fTargetPosj[NUM_JOINT];
+    float   fTargetVelj[NUM_JOINT];
+    float   fCurrentVelj[NUM_JOINT];
+
+    float   fTaskErr[NUM_TASK];
+    float   fTargetPosx[NUM_TASK];
+    float   fTargetVelx[NUM_TASK];
+    float   fCurrentVelx[NUM_TASK];
+    int     nSolutionSpace;
+    float   fRotationMatrix[3][3];
+
+    float   fDynamicTor[NUM_JOINT];
+    float   fActualJTS[NUM_JOINT];
+    float   fActualEJT[NUM_JOINT];
+    float   fActualETT[NUM_JOINT];
+
+    double  dSyncTime;
+    int     nActualBK[NUM_JOINT];
+    int     nActualBT[NUM_BUTTON];
+    float   fActualMC[NUM_JOINT];
+    float   fActualMT[NUM_JOINT];
+    bool    bCtrlBoxDigitalOutput[16];
+    bool    bCtrlBoxDigitalInput[16];
+    bool    bFlangeDigitalOutput[6];
+    bool    bFlangeDigitalInput[6];
+
+    int     nRegCount;
+    string  strModbusSymbol[100];
+    int     nModbusValue[100];
+  
     int     nAccessControl;
     bool    bHommingCompleted;
     bool    bTpInitialized;
-    int     nSpeed;
     bool    bMasteringNeed;
     bool    bDrlStopped;
     bool    bDisconnected;
@@ -180,6 +226,8 @@ namespace dsr_control{
         static void OnMonitoringAccessControlCB(const MONITORING_ACCESS_CONTROL eAccCtrl);
         static void OnLogAlarm(LPLOG_ALARM pLogAlarm);
 
+        std::string GetRobotName();
+        std::string GetRobotModel();
 
     private:
         ros::NodeHandle private_nh_;
@@ -189,10 +237,11 @@ namespace dsr_control{
         std::string m_strRobotGripper;
 
         //----- Service ---------------------------------------------------------------
-        ros::ServiceServer m_nh_move_service[10];
+        ros::ServiceServer m_nh_system[12];
+        ros::ServiceServer m_nh_move_service[12];
         ros::ServiceServer m_nh_io_service[8];
         ros::ServiceServer m_nh_modbus_service[4];
-        ros::ServiceServer m_nh_drl_service[4];
+        ros::ServiceServer m_nh_drl_service[10];
         ros::ServiceServer m_nh_tcp_service[4];
         ros::ServiceServer m_nh_tool_service[4];
         ros::ServiceServer m_nh_gripper_service[10];
@@ -238,7 +287,19 @@ namespace dsr_control{
         DR_STATE m_stDrState;
         DR_ERROR m_stDrError;
 
-        //----- Service Call-back functions ----------------------------------------------
+        //----- Service Call-back functions ----------------------------------------------.
+        //----- System
+        bool set_robot_mode_cb(dsr_msgs::SetRobotMode::Request& req, dsr_msgs::SetRobotMode::Response& res);
+        bool get_robot_mode_cb(dsr_msgs::GetRobotMode::Request& req, dsr_msgs::GetRobotMode::Response& res);
+        bool set_robot_system_cb(dsr_msgs::SetRobotSystem::Request& req, dsr_msgs::SetRobotSystem::Response& res);
+        bool get_robot_system_cb(dsr_msgs::GetRobotSystem::Request& req, dsr_msgs::GetRobotSystem::Response& res);
+        bool set_robot_speed_mode_cb(dsr_msgs::SetRobotSpeedMode::Request& req, dsr_msgs::SetRobotSpeedMode::Response& res);
+        bool get_robot_speed_mode_cb(dsr_msgs::GetRobotSpeedMode::Request& req, dsr_msgs::GetRobotSpeedMode::Response& res);
+        bool get_current_pose_cb(dsr_msgs::GetCurrentPose::Request& req, dsr_msgs::GetCurrentPose::Response& res);
+        bool get_current_solution_space_cb(dsr_msgs::GetCurrentSolutionSpace::Request& req, dsr_msgs::GetCurrentSolutionSpace::Response& res);
+        bool set_safe_stop_reset_type_cb(dsr_msgs::SetSafeStopResetType::Request& req, dsr_msgs::SetSafeStopResetType::Response& res);
+        bool get_last_alarm_cb(dsr_msgs::GetLastAlarm::Request& req, dsr_msgs::GetLastAlarm::Response& res);
+
         //----- MOTION
         bool movej_cb(dsr_msgs::MoveJoint::Request& req, dsr_msgs::MoveJoint::Response& res);
         bool movel_cb(dsr_msgs::MoveLine::Request& req, dsr_msgs::MoveLine::Response& res);
@@ -250,6 +311,7 @@ namespace dsr_control{
         bool movespiral_cb(dsr_msgs::MoveSpiral::Request& req, dsr_msgs::MoveSpiral::Response& res);
         bool moveperiodic_cb(dsr_msgs::MovePeriodic::Request& req, dsr_msgs::MovePeriodic::Response& res);
         bool movewait_cb(dsr_msgs::MoveWait::Request& req, dsr_msgs::MoveWait::Response& res);
+        bool jog_cb(dsr_msgs::Jog::Request& req, dsr_msgs::Jog::Response& res);
         
 
         //----- TCP
@@ -286,6 +348,7 @@ namespace dsr_control{
         bool drl_start_cb(dsr_msgs::DrlStart::Request& req, dsr_msgs::DrlStart::Response& res);
         bool drl_stop_cb(dsr_msgs::DrlStop::Request& req, dsr_msgs::DrlStop::Response& res);
         bool drl_resume_cb(dsr_msgs::DrlResume::Request& req, dsr_msgs::DrlResume::Response& res);
+        bool get_drl_state_cb(dsr_msgs::GetDrlState::Request& req, dsr_msgs::GetDrlState::Response& res);
 
         //----- Gripper
         bool robotiq_2f_open_cb(dsr_msgs::Robotiq2FOpen::Request& req, dsr_msgs::Robotiq2FOpen::Response& res);
