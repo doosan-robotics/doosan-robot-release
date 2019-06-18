@@ -1,0 +1,47 @@
+ros-kinetic-dsr-launcher (0.9.8-1xenial) xenial; urgency=high
+
+
+
+ -- Doosan Robotics <ros.robotics@doosan.com>  Mon, 17 Jun 2019 15:00:00 -0000
+
+ros-kinetic-dsr-launcher (0.9.7-1xenial) xenial; urgency=high
+
+
+
+ -- Doosan Robotics <ros.robotics@doosan.com>  Sun, 16 Jun 2019 15:00:00 -0000
+
+ros-kinetic-dsr-launcher (0.9.5-1xenial) xenial; urgency=high
+
+  * edit dsr_laucnher
+  * launch modified
+  * update multinode gripper and delete dsr bringup
+  * remove urdf
+  * 20190403 update
+  * 20190403 update
+  * Contributors: doosan-robotics
+
+ -- Doosan Robotics <ros.robotics@doosan.com>  Sun, 21 Apr 2019 15:00:00 -0000
+
+ros-kinetic-dsr-launcher (0.9.4-1xenial) xenial; urgency=high
+
+  * Update car.launch
+  * Update single_robot_rviz_gazebo.launch
+  * Update single_robot_rviz.launch
+  * Emulator commit
+  * Contributors: doosan robotics ros master, doosan-robotics
+
+ -- Doosan Robotics <ros.robotics@doosan.com>  Sun, 31 Mar 2019 15:00:00 -0000
+
+ros-kinetic-dsr-launcher (0.9.3-1xenial) xenial; urgency=high
+
+
+
+ -- Doosan Robotics <ros.robotics@doosan.com>  Wed, 27 Mar 2019 15:00:00 -0000
+
+ros-kinetic-dsr-launcher (0.9.1-1xenial) xenial; urgency=high
+
+
+
+ -- Doosan Robotics <ros.robotics@doosan.com>  Tue, 26 Mar 2019 15:00:00 -0000
+
+
