@@ -443,7 +443,9 @@ namespace DRAFramework
         // set tool(end-effector) information
         bool SetCurrentTool(string strSymbol) { return _SetCurrentTool(_rbtCtrl, strSymbol.c_str()); };
         // get tool(end-effector) information
-        string GetCurrentTool() { return string(_GetCurrentTool(_rbtCtrl)); };
+        string GetCurrentTool() { 
+         return string(_GetCurrentTool(_rbtCtrl));
+          };
         // add tool(end-effector) information
         bool ConfigCreateTool(string strSymbol, float fWeight, float fCog[3], float fInertia[NUM_TASK]) { return _ConfigCreateTool(_rbtCtrl, strSymbol.c_str(), fWeight, fCog, fInertia); };
         // del tool(end-effector) informaiton
