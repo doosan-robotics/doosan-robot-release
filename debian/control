@@ -1,0 +1,12 @@
+Source: ros-kinetic-doosan-robot
+Section: misc
+Priority: extra
+Maintainer: Doosan Robotics <ros.robotics@doosan.com>
+Build-Depends: debhelper (>= 9.0.0), ros-kinetic-catkin
+Homepage: http://wiki.ros.org/doosan_robotics
+Standards-Version: 3.9.2
+
+Package: ros-kinetic-doosan-robot
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-kinetic-doosan-robotics, ros-kinetic-dsr-control, ros-kinetic-dsr-description, ros-kinetic-dsr-example-py, ros-kinetic-dsr-gazebo, ros-kinetic-dsr-launcher, ros-kinetic-dsr-msgs, ros-kinetic-moveit-config-m0609, ros-kinetic-moveit-config-m0617, ros-kinetic-moveit-config-m1013, ros-kinetic-moveit-config-m1509
+Description: ROS packages for Doosan Robot
