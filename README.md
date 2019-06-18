@@ -2,9 +2,10 @@
 
 # *build* 
     ### We recoomand the /home/<user_home>/catkin_ws/src
-    cd -/catkin_ws/src
+    cd ~/catkin_ws/src
     git clone https://github.com/doosan-robotics/doosan-robot
-    rosdep install --from-paths doosan-robot --ignore-src --rosdistro kinetic -r -y 
+    rosdep install --from-paths doosan-robot --ignore-src --rosdistro kinetic -r -y
+    cd ~/catkin_ws
     catkin_make
     source ./devel/setup.bash
 
@@ -21,7 +22,7 @@ __packages for mobile robot__
 If you don`t have real doosan controller, you must excute our emulator. 
 Emulator has local IP(127.0.0.1) default port=12345. 
 ```bash
-cd ~/catkin_ws/doosan-robot/common/bin/DRCF
+cd ~/catkin_ws/src/doosan-robot/common/bin/DRCF
 sudo ./DRCF64 <port>   ## 64bits OS
 or 
 sudo ./DRCF32 <port>   ## 32bits OS
@@ -67,7 +68,7 @@ roslaunch dsr_description m0617.launch color:=blue gripper:=robotiq_2f # change 
 
 #### dsr_control _(default model:= m1013, default mode:= virtual)_
 > ###### __arguments__                    
->host := ROBOT_IP defalut = 192,168.137.100   
+>host := ROBOT_IP defalut = 192.168.127.100   
 port := ROBOT_PORT default = 12345  
 mode := OPERATION MODE <virtual  /  real> defalut = virtual  
 model := ROBOT_MODEL <m0609  /  0617/  m1013  /  m1509> defalut = m1013  
@@ -87,7 +88,7 @@ mobile := USE_MOBILE <none  /  husky> defalut = none
 
 __If you don`t have real doosan controller, you must execute emulator before run dsr_launcer.__
 > ###### __arguments__    
-   >host:= ROBOT_IP defalut = 192.168.137.100  ##Emulator IP = 127.0.0.1   
+   >host:= ROBOT_IP defalut = 192.168.127.100  ##Emulator IP = 127.0.0.1   
     port:= ROBOT_PORT default = 12345  
     mode:= OPERATION MODE <virtual  /  real> defalut = virtual  
     model:= ROBOT_MODEL <m0609  /  0617/  m1013  /  m1509> defalut = m1013  
@@ -96,7 +97,7 @@ __If you don`t have real doosan controller, you must execute emulator before run
     mobile:= USE_MOBILE <none  /  husky> defalut = none  
 
     roslaunch dsr_launcher single_robot_rviz.launch host:=127.0.0.1 port:=12345 mode:=virtual model:=m1013 color:=blue gripper:=none mobile:=none
-    roslaunch dsr_launcher single_robot_gazebo.launch host:=192.168.137.100
+    roslaunch dsr_launcher single_robot_gazebo.launch host:=192.168.127.100
     roslaunch dsr_launcher single_robot_rviz_gazebo.launch gripper:=robotiq_2f mobile:=husky
     roslaunch dsr_launcher multi_robot_rviz.launch
     roslaunch dsr_launcher multi_robot_gazebo.launch model:=m0609
@@ -156,7 +157,7 @@ roslaunch dsr_launcher single_robot_rviz.launch gripper:=robotiq_2f
   <cpp>
     rosrun dsr_example_cpp pick_and_place
   <python>
-    rosrun dsr_example_py pick_and_place
+    rosrun dsr_example_py pick_and_place.py
 ```
 - Serial Test(Loopback)
 ```bash
@@ -177,7 +178,7 @@ roslaunch dsr_launcher single_robot_rviz.launch mobile:=husky
   <cpp>
     rosrun dsr_example_cpp single_robot_mobile
   <python>
-    rosrun dsr_example_py single_robot_mobile
+    rosrun dsr_example_py single_robot_mobile.py
 ```
 
 > _$ roslaunch dsr_launcher single_robot_rviz mobile:=husky color:=blue_  
@@ -191,7 +192,7 @@ roslaunch dsr_launcher multi_robot_rviz.launch mobile:=husky
   <cpp>
     rosrun dsr_example_cpp multi_robot_mobile
   <python>
-    rosrun dsr_example_py multi_robot_mobile  
+    rosrun dsr_example_py multi_robot_mobile.py  
 ```
 
 > _$ roslaunch dsr_launcher multi_robot_rviz mobile:=husky_
@@ -205,7 +206,7 @@ roslaunch dsr_launcher multi_robot_rviz.launch mobile:=husky
   <include file="$(find dsr_gazebo)/launch/dsr_base.launch">
     <arg name="ns" value="dsr01"/> # Robot ID
     <arg name="model" value="m1013"/> # Robot Model
-    <arg name="host" value="192.168.137.100"/> # Robot IP
+    <arg name="host" value="192.168.127.100"/> # Robot IP
     <arg name="port" value="12345"/> # Robot Port
     <arg name="mode" value="virtual"/> # Robot Controller Mode 
     # Position & Posture in Gazebo
@@ -216,7 +217,7 @@ roslaunch dsr_launcher multi_robot_rviz.launch mobile:=husky
   <include file="$(find dsr_gazebo)/launch/dsr_base.launch">
     <arg name="ns" value="dsr02"/> # Secondary Robot ID
     <arg name="model" value="m1013"/> # Secondary Robot Model
-    <arg name="host" value="192.168.137.102"/> # Secondary Robot IP
+    <arg name="host" value="192.168.127.102"/> # Secondary Robot IP
     <arg name="port" value="12346"/> # Robot Port
     <arg name="mode" value="virtual"/> # Secondary Robot Controller Mode
     # Secondary Position & Posture in Gazebo
@@ -246,12 +247,14 @@ radius: 0.0"
 ```
 # manuals
 
-[Manual(kor)](http://wiki.ros.org/doosan-robotics?action=AttachFile&do=get&target=Doosan_Robotics_ROS_Manual_ver0.91_190412C%28Kor.%29.pdf)
+[Manual(kor)](http://wiki.ros.org/doosan-robotics?action=AttachFile&do=get&target=Doosan_Robotics_ROS_Manual_ver0.92_190508A%28Kor.%29.pdf)
 
 
-[Manual(Eng)](http://wiki.ros.org/doosan-robotics?action=AttachFile&do=get&target=Doosan_Robotics_ROS_Manual_ver0.91_190412C%28EN.%29.pdf)
+[Manual(Eng)](http://wiki.ros.org/doosan-robotics?action=AttachFile&do=get&target=Doosan_Robotics_ROS_Manual_ver0.92_190508A%28EN.%29.pdf)
 
 # demo
+
+Please contact __ros.robotics@doosan.com__ for demo usage instructions below.
 
 ### Doosan-Robots In Gazebo
 

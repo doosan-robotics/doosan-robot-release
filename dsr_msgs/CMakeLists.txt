@@ -8,6 +8,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 add_message_files(
     FILES
+    LogAlarm.msg
+    ModbusState.msg
     RobotError.msg
     RobotState.msg
     RobotStop.msg
@@ -15,6 +17,18 @@ add_message_files(
 
 add_service_files(
     FILES
+
+    ./system/SetRobotMode.srv
+    ./system/GetRobotMode.srv
+    ./system/SetRobotSystem.srv
+    ./system/GetRobotSystem.srv
+    ./system/SetRobotSpeedMode.srv
+    ./system/GetRobotSpeedMode.srv
+    ./system/GetCurrentPose.srv
+    ./system/GetCurrentSolutionSpace.srv
+    ./system/SetSafeStopResetType.srv
+    ./system/GetLastAlarm.srv
+
     ./motion/MoveJoint.srv
     ./motion/MoveLine.srv
     ./motion/MoveJointx.srv
@@ -25,6 +39,7 @@ add_service_files(
     ./motion/MoveSpiral.srv
     ./motion/MovePeriodic.srv
     ./motion/MoveWait.srv
+    ./motion/Jog.srv
 
     ./tool/ConfigCreateTool.srv
     ./tool/ConfigDeleteTool.srv
@@ -54,6 +69,7 @@ add_service_files(
     ./drl/DrlStop.srv
     ./drl/DrlPause.srv
     ./drl/DrlResume.srv
+    ./drl/GetDrlState.srv
 
     ./gripper/Robotiq2FClose.srv
     ./gripper/Robotiq2FOpen.srv
