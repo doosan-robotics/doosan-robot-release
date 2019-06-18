@@ -2,6 +2,14 @@
 Changelog for package dsr_gazebo
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.9.8 (2019-06-18)
+------------------
+
+0.9.7 (2019-06-17)
+------------------
+* dsr_example_py directory modified
+* Contributors: doosan-robotics
+
 0.9.5 (2019-04-22)
 ------------------
 * edit dsr_gazebo CmakeList.txt
