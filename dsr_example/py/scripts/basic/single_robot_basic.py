@@ -25,7 +25,7 @@ def shutdown():
     print "shutdown time!"
     print "shutdown time!"
     print "shutdown time!"
-
+    set_robot_mode(0) #ROBOT_MODE_MANUAL
     pub_stop.publish(stop_mode=1) #STOP_TYPE_QUICK)
     return 0
 
@@ -67,6 +67,8 @@ if __name__ == "__main__":
     move_spiral = rospy.ServiceProxy('/'+ROBOT_ID +ROBOT_MODEL+'/motion/move_spiral', MoveSpiral)
     move_periodic = rospy.ServiceProxy('/'+ROBOT_ID +ROBOT_MODEL+'/motion/move_periodic', MovePeriodic)
 
+    set_robot_mode = rospy.ServiceProxy('/' + ROBOT_ID + ROBOT_MODEL + '/system/set_robot_mode', SetRobotMode)
+    
     time= 0.0; mode=0; ref=0; radius=0.0; blendType=0; syncType=0
     vel=30; acc=30; sol=0
     angle1=0.0; angle2=0.0
@@ -121,16 +123,17 @@ if __name__ == "__main__":
     
     mb_seg = _ros_listToFloat64MultiArray([seg1, seg2, seg3])
     posCnt = len(mb_seg)
-    
+    #set_robot_mode(1) # ROBOT_MODE_AUTONOMOUS
     while not rospy.is_shutdown():
-        move_joint(p2, vel, acc, time, radius, mode, blendType, syncType) 
-        move_jointx(x1, sol, vel, acc, time, radius, ref, mode, blendType, syncType)
-        move_line(x2, velx, accx, time, radius, ref, mode, blendType, syncType) 
-        move_circle(CirclePos, velx, accx, time, radius, ref, mode, angle1, angle2, blendType, syncType)
-        move_spline_joint(SplinePosj, len(SplinePosj), vel, acc, time, mode, syncType)
-        move_spline_task(SplinePosx, len(SplinePosx), velx, accx, time, ref, mode, opt, syncType)
-        move_spiral(revolution, maxRadius, maxLength, velx, accx, time, taskAxis, ref, syncType)
-        move_periodic(amp, period, atime, repeat, ref, syncType)
-        move_blending(mb_seg, posCnt, velx, accx, time, ref, mode, syncType)
+        move_joint(p2, vel, acc, time, radius, mode, blendType, syncType)
+        move_joint(p1, vel, acc, time, radius, mode, blendType, syncType) 
+        #move_jointx(x1, sol, vel, acc, time, radius, ref, mode, blendType, syncType)
+        #move_line(x2, velx, accx, time, radius, ref, mode, blendType, syncType) 
+        #move_circle(CirclePos, velx, accx, time, radius, ref, mode, angle1, angle2, blendType, syncType)
+        #move_spline_joint(SplinePosj, len(SplinePosj), vel, acc, time, mode, syncType)
+        #move_spline_task(SplinePosx, len(SplinePosx), velx, accx, time, ref, mode, opt, syncType)
+        #move_spiral(revolution, maxRadius, maxLength, velx, accx, time, taskAxis, ref, syncType)
+        #move_periodic(amp, period, atime, repeat, ref, syncType)
+        #move_blending(mb_seg, posCnt, velx, accx, time, ref, mode, syncType)
 
     print 'good bye!'
