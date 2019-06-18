@@ -100,20 +100,22 @@ namespace dsr_control{
 
     void DRHWInterface::OnMonitoringCtrlIOCB (const LPMONITORING_CTRLIO pCtrlIO)
     {
-        int nIoCtlBox = 0x0;
-        for (int i = 0; i < NUM_DIGITAL; i++)
-        {
-            cout << "[callback OnMonitoringCtrlIOCB] DI#"<< i << ": " << pCtrlIO->_tInput._iActualDI[i] << endl;
-            nIoCtlBox += (pCtrlIO->_tInput._iActualDI[i] << i);
+        for (int i = 0; i < NUM_DIGITAL; i++){
+            if(pCtrlIO){  
+                g_stDrState.bCtrlBoxDigitalOutput[i] = pCtrlIO->_tOutput._iTargetDO[i];  
+                g_stDrState.bCtrlBoxDigitalInput[i]  = pCtrlIO->_tInput._iActualDI[i];  
+            }
         }
-
-        g_stDrState.nIoControlBox = nIoCtlBox;
     }
 
     void DRHWInterface::OnMonitoringModbusCB (const LPMONITORING_MODBUS pModbus)
     {
-        for (int i = 0; i < pModbus->_iRegCount; i++)
+        g_stDrState.nRegCount = pModbus->_iRegCount;
+        for (int i = 0; i < pModbus->_iRegCount; i++){
             cout << "[callback OnMonitoringModbusCB] " << pModbus->_tRegister[i]._szSymbol <<": " << pModbus->_tRegister[i]._iValue<< endl;
+            g_stDrState.strModbusSymbol[i] = pModbus->_tRegister[i]._szSymbol;
+            g_stDrState.nModbusValue[i]    = pModbus->_tRegister[i]._iValue;
+        }
     }
 
     void DRHWInterface::OnMonitoringDataCB(const LPMONITORING_DATA pData)
@@ -155,11 +157,55 @@ namespace dsr_control{
         pData->_tMisc._fActualMC[NUM_JOINT];            // motor input current
         pData->_tMisc._fActualMT[NUM_JOINT];            // motro current temperature
         */
+        g_stDrState.nActualMode = pData->_tCtrl._tState._iActualMode;
+        g_stDrState.nActualSpace = pData->_tCtrl._tState._iActualSpace;
 
         for (int i = 0; i < NUM_JOINT; i++){
             if(pData){  
-               g_stDrState.fCurrentPosj[i] = pData->_tCtrl._tJoint._fActualPos[i];    
-               ///g_stDrState.fCurrentPosx[i] = pData->_tCtrl._tWorld._fActualPos[i];    
+                g_stDrState.fCurrentPosj[i] = pData->_tCtrl._tJoint._fActualPos[i];    
+                g_stDrState.fCurrentPosx[i] = pData->_tCtrl._tTool._fActualPos[0][i];    
+                g_stDrState.fCurrentVelj[i] = pData->_tCtrl._tJoint._fActualVel[i];
+                g_stDrState.fCurrentVelx[i] = pData->_tCtrl._tTool._fActualVel[i];
+                g_stDrState.fJointAbs[i]    = pData->_tCtrl._tJoint._fActualAbs[i];
+                g_stDrState.fJointErr[i]    = pData->_tCtrl._tJoint._fActualErr[i];
+                g_stDrState.fTargetPosj[i]  = pData->_tCtrl._tJoint._fTargetPos[i];
+                g_stDrState.fTargetVelj[i]  = pData->_tCtrl._tJoint._fTargetVel[i];
+
+                g_stDrState.fTaskErr[i]     = pData->_tCtrl._tTool._fActualErr[i];
+                g_stDrState.fTargetPosx[i]  = pData->_tCtrl._tTool._fTargetPos[i];
+                g_stDrState.fTargetVelx[i]  = pData->_tCtrl._tTool._fTargetVel[i];
+
+                g_stDrState.fDynamicTor[i]  = pData->_tCtrl._tTorque._fDynamicTor[i];
+                g_stDrState.fActualJTS[i]   = pData->_tCtrl._tTorque._fActualJTS[i];
+                g_stDrState.fActualEJT[i]   = pData->_tCtrl._tTorque._fActualEJT[i];
+                g_stDrState.fActualETT[i]   = pData->_tCtrl._tTorque._fActualETT[i];
+
+                g_stDrState.nActualBK[i]    = pData->_tMisc._iActualBK[i]; 
+                g_stDrState.fActualMC[i]    = pData->_tMisc._fActualMC[i];
+                g_stDrState.fActualMT[i]    = pData->_tMisc._fActualMT[i];
+            }
+        }
+        for (int i = 5; i < NUM_BUTTON; i++){
+            if(pData){
+                g_stDrState.nActualBT[i]    = pData->_tMisc._iActualBT[i];  
+            }
+        }
+
+        g_stDrState.nSolutionSpace  = pData->_tCtrl._tTool._iSolutionSpace;    
+        g_stDrState.dSyncTime       = pData->_tMisc._dSyncTime;  
+
+        for(int i = 0; i < 3; i++){
+            for(int j = 0; j < 3; j++){
+                if(pData){
+                    g_stDrState.fRotationMatrix[j][i] = pData->_tCtrl._tTool._fRotationMatrix[j][i];
+                }
+            }
+        }
+
+        for (int i = 0; i < NUM_FLANGE_IO; i++){
+            if(pData){
+                g_stDrState.bFlangeDigitalInput[i]  = pData->_tMisc._iActualDI[i];
+                g_stDrState.bFlangeDigitalOutput[i] = pData->_tMisc._iActualDO[i];
             }
         }
     }
@@ -169,7 +215,7 @@ namespace dsr_control{
         //This function is called when the state changes.
         //ROS_INFO("DRHWInterface::OnMonitoringStateCB");    
         // Only work within 50msec
-
+        ROS_INFO("On Monitor State");
         switch((unsigned char)eState)
         {
 #if 0 // TP initializing logic, Don't use in API level. (If you want to operate without TP, use this logic)       
@@ -195,7 +241,9 @@ namespace dsr_control{
             }
             break;
         case STATE_SAFE_OFF:
-            if (g_bHasControlAuthority) Drfl.SetRobotControl(CONTROL_SERVO_ON);
+            if (g_bHasControlAuthority){
+                Drfl.SetRobotControl(CONTROL_SERVO_ON);
+            } 
             break;
         case STATE_SAFE_STOP2:
             if (g_bHasControlAuthority) Drfl.SetRobotControl(CONTROL_RECOVERY_SAFE_STOP);
@@ -234,6 +282,8 @@ namespace dsr_control{
             OnMonitoringStateCB(Drfl.GetRobotState());
             break;
         case MONITORING_ACCESS_CONTROL_DENY:
+            ROS_INFO("Access control deny !!!!!!!!!!!!!!!");
+            break;
         case MONITORING_ACCESS_CONTROL_LOSS:
             g_bHasControlAuthority = FALSE;
             if (g_bTpInitailizingComplted) {
@@ -251,7 +301,7 @@ namespace dsr_control{
     {
         //This function is called when an error occurs.    
         ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();  
-        ros::Publisher PubRobotError = node->advertise<dsr_msgs::RobotError>("/doosan_robot/error",100);
+        ros::Publisher PubRobotError = node->advertise<dsr_msgs::RobotError>("error",100);
         dsr_msgs::RobotError msg;
 
         ROS_ERROR("[callback OnLogAlarm]");
@@ -288,31 +338,79 @@ namespace dsr_control{
         //ROS_INFO("receive msg.stop_mode = %d", msg->stop_mode);
         //ROS_INFO("receive msg.stop_mode = %d", msg->stop_mode);
         ROS_INFO("receive msg.stop_mode = %d", msg->stop_mode);
-    
         Drfl.MoveStop((STOP_TYPE)msg->stop_mode);
     } 
 
     int DRHWInterface::MsgPublisher_RobotState()
     {
         dsr_msgs::RobotState msg;
+        dsr_msgs::ModbusState modbus_state;
         memcpy(&m_stDrState, &g_stDrState, sizeof(DR_STATE));
          
         msg.robot_state         = m_stDrState.nRobotState;
         msg.robot_state_str     = m_stDrState.strRobotState;
         ///printf("[%s,%s] msg.robot_state_str =%s m_stDrState.strRobotState=%s\n",m_strRobotName.c_str(),m_strRobotModel.c_str(),msg.robot_state_str.c_str(),m_stDrState.strRobotState);
+        msg.actual_mode         = m_stDrState.nActualMode;
+        msg.actual_space        = m_stDrState.nActualSpace;
 
         for (int i = 0; i < NUM_JOINT; i++)
         {
             msg.current_posj[i]    = m_stDrState.fCurrentPosj[i];
-            ///msg.current_posx[i]    = m_stDrState.fCurrentPosx[i];
+            msg.current_velj[i]    = m_stDrState.fCurrentVelj[i];
+            msg.joint_abs[i]       = m_stDrState.fJointAbs[i];
+            msg.joint_err[i]       = m_stDrState.fJointErr[i];
+            msg.target_posj[i]     = m_stDrState.fTargetPosj[i];
+            msg.target_velj[i]     = m_stDrState.fTargetVelj[i];
+
+            msg.current_posx[i]    = m_stDrState.fCurrentPosx[i];
+            msg.current_velx[i]    = m_stDrState.fCurrentVelx[i];
+            msg.task_err[i]        = m_stDrState.fTaskErr[i];
+            msg.target_velx[i]     = m_stDrState.fTargetVelx[i];
+            msg.target_posx[i]     = m_stDrState.fTargetPosx[i];
+
+            msg.dynamic_tor[i]     = m_stDrState.fDynamicTor[i];
+            msg.actual_jts[i]      = m_stDrState.fActualJTS[i];
+            msg.actual_ejt[i]      = m_stDrState.fActualEJT[i];
+            msg.actual_ett[i]      = m_stDrState.fActualETT[i];
+
+
+            msg.actual_bk[i]       = m_stDrState.nActualBK[i];
+            msg.actual_mc[i]       = m_stDrState.fActualMC[i];
+            msg.actual_mt[i]       = m_stDrState.fActualMT[i];
         }
-        msg.io_control_box      = m_stDrState.nIoControlBox;
+        msg.solution_space      = m_stDrState.nSolutionSpace;
+        msg.sync_time           = m_stDrState.dSyncTime;
+        std_msgs::Float64MultiArray arr;
+
+        for (int i = 0; i < 3; i++){
+            arr.data.clear();
+            for (int j = 0; j < 3; j++){
+                arr.data.push_back(m_stDrState.fRotationMatrix[i][j]);
+            }
+            msg.rotation_matrix.push_back(arr);
+        }
+        
+        for (int i = 0; i < NUM_BUTTON; i++){
+            msg.actual_bt[i] = m_stDrState.nActualBT[i];
+        }
+        for (int i = 0; i < NUM_DIGITAL; i++){
+            msg.ctrlbox_digital_input[i]    = m_stDrState.bCtrlBoxDigitalInput[i];
+            msg.ctrlbox_digital_output[i]   = m_stDrState.bCtrlBoxDigitalOutput[i];    
+        }
+        for (int i = 0; i < NUM_FLANGE_IO; i++){
+            msg.flange_digital_input[i]     = m_stDrState.bFlangeDigitalInput[i];
+            msg.flange_digital_output[i]    = m_stDrState.bFlangeDigitalOutput[i];
+        }
         //msg.io_modbus;    GJH
+        for (int i = 0; i < m_stDrState.nRegCount; i++){
+            modbus_state.modbus_symbol   = m_stDrState.strModbusSymbol[i];
+            modbus_state.modbus_value    = m_stDrState.nModbusValue[i];
+            msg.modbus_state.push_back(modbus_state);
+        }
         //msg.error;        GJH
         msg.access_control      = m_stDrState.nAccessControl;
         msg.homming_completed   = m_stDrState.bHommingCompleted;
         msg.tp_initialized      = m_stDrState.bTpInitialized; 
-        msg.speed               = m_stDrState.nSpeed;
         msg.mastering_need      = m_stDrState.bMasteringNeed;
         msg.drl_stopped         = m_stDrState.bDrlStopped;
         msg.disconnected        = m_stDrState.bDisconnected;
@@ -430,7 +528,17 @@ namespace dsr_control{
         m_SubSerialRead = nh_temp.subscribe("serial_read", 100, &Serial_comm::read_callback, &ser_comm);
         m_PubSerialWrite = nh_temp.advertise<std_msgs::String>("serial_write", 100);
         
-
+        // system Operations
+        m_nh_system[0] = private_nh_.advertiseService("system/set_robot_mode", &DRHWInterface::set_robot_mode_cb, this);
+        m_nh_system[1] = private_nh_.advertiseService("system/get_robot_mode", &DRHWInterface::get_robot_mode_cb, this);
+        m_nh_system[2] = private_nh_.advertiseService("system/set_robot_system", &DRHWInterface::set_robot_system_cb, this);
+        m_nh_system[3] = private_nh_.advertiseService("system/get_robot_system", &DRHWInterface::get_robot_system_cb, this);
+        m_nh_system[4] = private_nh_.advertiseService("system/set_robot_speed_mode", &DRHWInterface::set_robot_speed_mode_cb, this);
+        m_nh_system[5] = private_nh_.advertiseService("system/get_robot_speed_mode", &DRHWInterface::get_robot_speed_mode_cb, this);
+        m_nh_system[6] = private_nh_.advertiseService("system/get_current_pose", &DRHWInterface::get_current_pose_cb, this);
+        m_nh_system[7] = private_nh_.advertiseService("system/get_current_solution_space", &DRHWInterface::get_current_solution_space_cb, this);
+        m_nh_system[8] = private_nh_.advertiseService("system/set_safe_stop_reset_type", &DRHWInterface::set_safe_stop_reset_type_cb, this);
+        m_nh_system[9] = private_nh_.advertiseService("system/get_last_alarm", &DRHWInterface::get_last_alarm_cb, this);
         //  motion Operations
         m_nh_move_service[0] = private_nh_.advertiseService("motion/move_joint", &DRHWInterface::movej_cb, this);
         m_nh_move_service[1] = private_nh_.advertiseService("motion/move_line", &DRHWInterface::movel_cb, this);
@@ -442,7 +550,7 @@ namespace dsr_control{
         m_nh_move_service[7] = private_nh_.advertiseService("motion/move_spiral", &DRHWInterface::movespiral_cb, this);
         m_nh_move_service[8] = private_nh_.advertiseService("motion/move_periodic", &DRHWInterface::moveperiodic_cb, this);
         m_nh_move_service[9] = private_nh_.advertiseService("motion/move_wait", &DRHWInterface::movewait_cb, this);
-
+        m_nh_move_service[10]= private_nh_.advertiseService("motion/jog", &DRHWInterface::jog_cb, this);
         //  GPIO Operations
         m_nh_io_service[0] = private_nh_.advertiseService("io/set_digital_output", &DRHWInterface::set_digital_output_cb, this);
         m_nh_io_service[1] = private_nh_.advertiseService("io/get_digital_input", &DRHWInterface::get_digital_input_cb, this);
@@ -476,7 +584,8 @@ namespace dsr_control{
         m_nh_drl_service[1] = private_nh_.advertiseService("drl/drl_resume", &DRHWInterface::drl_resume_cb, this);
         m_nh_drl_service[2] = private_nh_.advertiseService("drl/drl_start", &DRHWInterface::drl_start_cb, this);
         m_nh_drl_service[3] = private_nh_.advertiseService("drl/drl_stop", &DRHWInterface::drl_stop_cb, this);
-
+        m_nh_drl_service[4] = private_nh_.advertiseService("drl/get_drl_state", &DRHWInterface::get_drl_state_cb, this);
+        
         // Gripper Operations
         m_nh_gripper_service[0] = private_nh_.advertiseService("gripper/robotiq_2f_open", &DRHWInterface::robotiq_2f_open_cb, this);
         m_nh_gripper_service[1] = private_nh_.advertiseService("gripper/robotiq_2f_close", &DRHWInterface::robotiq_2f_close_cb, this);
@@ -512,7 +621,7 @@ namespace dsr_control{
     {
         ROS_INFO("[dsr_hw_interface] init() ==> setup callback fucntion");
         int nServerPort = 12345;
-
+        ROS_INFO("INIT@@@@@@@@@@@@@@@@@@@@@@@@@2");
         //--- doosan API's call-back fuctions : Only work within 50msec in call-back functions
         Drfl.SetOnTpInitializingCompleted(OnTpInitializingCompletedCB);
         Drfl.SetOnHommingCompleted(OnHommingCompletedCB);
@@ -551,7 +660,7 @@ namespace dsr_control{
                 usleep(delay);
             }
 
-            //--- Set Robot mode : NANUAL
+            //--- Set Robot mode : MANUAL
             assert(Drfl.SetRobotMode(ROBOT_MODE_MANUAL));
 
             //--- Set Robot mode : virual or real 
@@ -616,8 +725,18 @@ namespace dsr_control{
     }
 
     //----- SIG Handler --------------------------------------------------------------
-    void DRHWInterface::sigint_handler( int signo)
+    void DRHWInterface::sigint_handler(int signo)
     {
+        ROS_INFO("SIG HANDLER !!!!!!!!!");
+
+        ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
+        ros::Publisher pubRobotStop = node->advertise<dsr_msgs::RobotStop>("/"+m_strRobotName +m_strRobotModel+"/stop",100);
+        
+        dsr_msgs::RobotStop msg;
+        
+        msg.stop_mode  = STOP_TYPE_QUICK;
+        pubRobotStop.publish(msg);
+
         ROS_INFO("[sigint_hangler] CloseConnection");
         ROS_INFO("[sigint_hangler] CloseConnection");
         ROS_INFO("[sigint_hangler] CloseConnection");
@@ -691,6 +810,49 @@ namespace dsr_control{
     }
 
     //----- Service Call-back functions ------------------------------------------------------------
+
+    bool DRHWInterface::set_robot_mode_cb(dsr_msgs::SetRobotMode::Request& req, dsr_msgs::SetRobotMode::Response& res){
+        res.success = Drfl.SetRobotMode((ROBOT_MODE)req.robot_mode);
+    }
+    
+    bool DRHWInterface::get_robot_mode_cb(dsr_msgs::GetRobotMode::Request& req, dsr_msgs::GetRobotMode::Response& res){
+        res.robot_mode = Drfl.GetRobotMode();
+    }
+
+    bool DRHWInterface::set_robot_system_cb(dsr_msgs::SetRobotSystem::Request& req, dsr_msgs::SetRobotSystem::Response& res){
+        res.success = Drfl.SetRobotSystem((ROBOT_SYSTEM)req.robot_system);
+    }
+    bool DRHWInterface::get_robot_system_cb(dsr_msgs::GetRobotSystem::Request& req, dsr_msgs::GetRobotSystem::Response& res){
+        res.robot_system = Drfl.GetRobotSystem();
+    }
+    bool DRHWInterface::set_robot_speed_mode_cb(dsr_msgs::SetRobotSpeedMode::Request& req, dsr_msgs::SetRobotSpeedMode::Response& res){
+        res.success = Drfl.SetRobotSpeedMode((SPEED_MODE)req.speed_mode);
+    }
+    bool DRHWInterface::get_robot_speed_mode_cb(dsr_msgs::GetRobotSpeedMode::Request& req, dsr_msgs::GetRobotSpeedMode::Response& res){
+        res.speed_mode = Drfl.GetRobotSpeedMode();
+    }
+    bool DRHWInterface::get_current_pose_cb(dsr_msgs::GetCurrentPose::Request& req, dsr_msgs::GetCurrentPose::Response& res){
+        for(int i = 0; i < NUM_TASK; i++){
+            res.pos[i] = Drfl.GetCurrentPose((ROBOT_SPACE)req.space_type)->_fPosition[i];
+        }
+    }
+    bool DRHWInterface::get_current_solution_space_cb(dsr_msgs::GetCurrentSolutionSpace::Request& req, dsr_msgs::GetCurrentSolutionSpace::Response& res){
+        res.solution_space = Drfl.GetCurrentSolutionSpace();
+    }
+    bool DRHWInterface::set_safe_stop_reset_type_cb(dsr_msgs::SetSafeStopResetType::Request& req, dsr_msgs::SetSafeStopResetType::Response& res){
+        Drfl.SetSafeStopResetType((SAFE_STOP_RESET_TYPE)req.reset_type); //no return ???
+        res.success = true;
+    }
+    bool DRHWInterface::get_last_alarm_cb(dsr_msgs::GetLastAlarm::Request& req, dsr_msgs::GetLastAlarm::Response& res){
+        res.log_alarm.level = Drfl.GetLastAlarm()->_iLevel;
+        res.log_alarm.group = Drfl.GetLastAlarm()->_iGroup;
+        res.log_alarm.index = Drfl.GetLastAlarm()->_iIndex;
+        for(int i = 0; i < 3; i++){
+            std::string str_temp(Drfl.GetLastAlarm()->_szParam[i]);
+            res.log_alarm.param[i] = str_temp;
+        }
+    }
+
     bool DRHWInterface::movej_cb(dsr_msgs::MoveJoint::Request& req, dsr_msgs::MoveJoint::Response& res)
     {
         std::array<float, NUM_JOINT> target_pos;
@@ -885,6 +1047,10 @@ namespace dsr_control{
         res.success = Drfl.MoveWait();
     }
 
+    bool DRHWInterface::jog_cb(dsr_msgs::Jog::Request& req, dsr_msgs::Jog::Response& res)
+    {
+        res.success = Drfl.Jog((JOG_AXIS)req.jog_axis, (MOVE_REFERENCE)req.move_reference, req.speed);
+    }
     bool DRHWInterface::set_digital_output_cb(dsr_msgs::SetCtrlBoxDigitalOutput::Request& req, dsr_msgs::SetCtrlBoxDigitalOutput::Response& res)
     {
         //ROS_INFO("DRHWInterface::set_digital_output_cb() called and calling Drfl.SetCtrlBoxDigitalOutput");
@@ -964,6 +1130,10 @@ namespace dsr_control{
     {
         //ROS_INFO("DRHWInterface::drl_resume_cb() called and calling Drfl.DrlResume");
         res.success = Drfl.PlayDrlResume();
+    }
+    bool DRHWInterface::get_drl_state_cb(dsr_msgs::GetDrlState::Request& req, dsr_msgs::GetDrlState::Response& res)
+    {
+        res.drl_state = Drfl.GetProgramState();
     }
     bool DRHWInterface::set_current_tcp_cb(dsr_msgs::SetCurrentTcp::Request& req, dsr_msgs::SetCurrentTcp::Response& res)
     {
