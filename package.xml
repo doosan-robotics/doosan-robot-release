@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>doosan_robotics</name>
-  <version>0.9.6</version>
+  <version>0.9.8</version>
   <description>The doosan_robotics metapackage</description>
 
   <author email="kabkyoum.kim@doosan.com">Kab Kyoum Kim</author>
@@ -20,7 +20,6 @@
   <exec_depend>dsr_description</exec_depend>
   <exec_depend>dsr_launcher</exec_depend>
   <exec_depend>dsr_example_py</exec_depend>
-  <exec_depend>dsr_example_cpp</exec_depend>
   <exec_depend>dsr_gazebo</exec_depend>
   <exec_depend>dsr_msgs</exec_depend>
   <exec_depend>moveit_config_m0609</exec_depend>
