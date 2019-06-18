@@ -1,0 +1,12 @@
+Source: ros-kinetic-serial-node-example
+Section: misc
+Priority: extra
+Maintainer: Doosan Robotics <ros.robotics@doosan.com>
+Build-Depends: debhelper (>= 9.0.0), ros-kinetic-catkin, ros-kinetic-dsr-msgs, ros-kinetic-roscpp, ros-kinetic-serial, ros-kinetic-std-msgs
+Homepage: http://wiki.ros.org/doosan_robotics
+Standards-Version: 3.9.2
+
+Package: ros-kinetic-serial-node-example
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-kinetic-dsr-msgs, ros-kinetic-roscpp, ros-kinetic-serial, ros-kinetic-std-msgs
+Description: The example for serial communication in ROS environment.

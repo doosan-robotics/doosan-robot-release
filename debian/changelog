@@ -1,0 +1,14 @@
+ros-kinetic-serial-node-example (0.9.8-1xenial) xenial; urgency=high
+
+
+
+ -- Doosan Robotics <ros.robotics@doosan.com>  Mon, 17 Jun 2019 15:00:00 -0000
+
+ros-kinetic-serial-node-example (0.9.7-1xenial) xenial; urgency=high
+
+  * add serial example node in the service pack
+  * Contributors: doosan-robotics
+
+ -- Doosan Robotics <ros.robotics@doosan.com>  Sun, 16 Jun 2019 15:00:00 -0000
+
+
