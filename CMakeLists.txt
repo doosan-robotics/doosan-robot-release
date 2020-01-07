@@ -13,6 +13,7 @@ add_message_files(
     RobotError.msg
     RobotState.msg
     RobotStop.msg
+    JogMultiAxis.msg
 )
 
 add_service_files(
@@ -28,6 +29,10 @@ add_service_files(
     ./system/GetCurrentSolutionSpace.srv
     ./system/SetSafeStopResetType.srv
     ./system/GetLastAlarm.srv
+    ./system/GetRobotState.srv
+    ./system/GetExternalTorque.srv
+    ./system/GetJointTorque.srv
+    ./system/GetToolForce.srv            
 
     ./motion/MoveJoint.srv
     ./motion/MoveLine.srv
@@ -40,6 +45,10 @@ add_service_files(
     ./motion/MovePeriodic.srv
     ./motion/MoveWait.srv
     ./motion/Jog.srv
+    ./motion/JogMulti.srv
+    ./motion/MoveStop.srv
+    ./motion/MovePause.srv
+    ./motion/MoveResume.srv
 
     ./tool/ConfigCreateTool.srv
     ./tool/ConfigDeleteTool.srv
