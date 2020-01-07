@@ -1,6 +1,11 @@
 # [Doosan robotics](http://www.doosanrobotics.com/kr/)
 
+# *overview*
+
+[Doosan ROS Video](https://www.youtube.com/watch?v=mE24X5PhZ4M&feature=youtu.be)
+
 # *build* 
+##### *Doosan Robot ROS Package is implemented at ROS-Kinetic.*
     ### We recoomand the /home/<user_home>/catkin_ws/src
     cd ~/catkin_ws/src
     git clone https://github.com/doosan-robotics/doosan-robot
@@ -23,14 +28,14 @@ If you don`t have real doosan controller, you must excute our emulator.
 Emulator has local IP(127.0.0.1) default port=12345. 
 ```bash
 cd ~/catkin_ws/src/doosan-robot/common/bin/DRCF
-sudo ./DRCF64 <port>   ## 64bits OS
+./DRCF64 <port>   ## 64bits OS
 or 
-sudo ./DRCF32 <port>   ## 32bits OS
+./DRCF32 <port>   ## 32bits OS
 ``` 
 
-> _$ sudo ./DRCF64 12345_
+> _$ ./DRCF64 12345_
 
-> <img src="https://user-images.githubusercontent.com/47092672/55616587-17293700-57cd-11e9-9c47-605f4aaf9336.PNG" width="80%">
+> <img src="https://user-images.githubusercontent.com/47092672/63494967-dc186d80-c4f9-11e9-967d-519656457499.jpg" width="80%">
 
 
 #### dsr_description
@@ -64,7 +69,18 @@ roslaunch dsr_description m0617.launch color:=blue gripper:=robotiq_2f # change 
     
 <img src="https://user-images.githubusercontent.com/47092672/55613994-fd84f100-57c6-11e9-97eb-49d1d7c9e32c.png" width="70%">
 
-
+##### *How to use MoveIt Commander*
+###### _You can run Moveit with CLI commands through the moveit commander package._
+###### _You can install the "moveit_commander" package using below command._
+    sudo apt-get insatll ros-kinetic-moveit-commander
+##### *MoveitCommander usage example*
+	ROS_NAMESPACE=/dsr01m1013 rosrun moveit_commander moveit_commander_cmdline.py robot_description:=/dsr01m1013/robot_description   
+###### *moveit commander CLI is executed.*    
+    > use arm 
+    > goal0 = [0 0 0 0 0 0]        # save the home position to variable "goal0"
+    > goal1 = [0 0 1.57 0 1.57 0]  # save the target position to varialbe "goal1" / radian
+    > go goal1                     # plan & excute (the robot is going to move target position)
+    > go goal0                     # paln & excute (the robot is going to move home position)
 
 #### dsr_control _(default model:= m1013, default mode:= virtual)_
 > ###### __arguments__                    
@@ -75,7 +91,6 @@ model := ROBOT_MODEL <m0609  /  0617/  m1013  /  m1509> defalut = m1013
 color := ROBOT_COLOR <white  /  blue> defalut = white  
 gripper := USE_GRIPPER <none  /  robotiq_2f> defalut = none  
 mobile := USE_MOBILE <none  /  husky> defalut = none  
-
 
 #### dsr_control + dsr_moveit_config
     roslaunch dsr_control dsr_moveit.launch
@@ -106,45 +121,41 @@ __If you don`t have real doosan controller, you must execute emulator before run
 #### dsr_example
 ###### single robot
     <launch>
-      single robot in rviz : roslaunch dsr_launcher single_robot_rviz.launch model:=m1013 color:=white
-      single robot in gazebo : roslaunch dsr_launcher single_robot_gazebo.launch model:=m1013 color:=blue
-      single robot in rviz + gazebo : roslaunch dsr_launcher single_robot_rviz_gazebo.launch model:=m1013 color:=white
+      - single robot in rviz : 
+      roslaunch dsr_launcher single_robot_rviz.launch model:=m1013 color:=white
+      - single robot in gazebo : 
+      roslaunch dsr_launcher single_robot_gazebo.launch model:=m1013 color:=blue
+      - single robot in rviz + gazebo : 
+      roslaunch dsr_launcher single_robot_rviz_gazebo.launch model:=m1013 color:=white
     <run application node>
-      <cpp>
-        basic example : rosrun dsr_example_cpp single_robot_basic dsr01 m1013
-        simple example : rosrun dsr_example_cpp single_robot_simple dsr01 m1013
-      <py>
-        basic example : rosrun dsr_example_py single_robot_basic.py dsr01 m1013
-        simple example : rosrun dsr_example_py single_robot_simple.py dsr01 m1013
+      rosrun dsr_example_py single_robot_simple.py dsr01 m1013
     <ex>
       roslaunch dsr_launcher single_robot_rviz_gazebo.launch model:=m1013 color:=white
-      rosrun dsr_example_cpp single_robot_simple dsr01 m1013
+      rosrun dsr_example_py single_robot_simple.py
 
 > _$ roslaunch dsr_launcher single_robot_rviz_gazebo.launch_
 
-> _$ rosrun dsr_example_cpp single_robot_simple_
+> _$ rosrun dsr_example_py single_robot_simple.py_
 > <img src="https://user-images.githubusercontent.com/47092672/55624471-fbc82700-57e0-11e9-8c1f-4fe9f526944b.png" width="70%">
 
 
 ###### multi robot
     <launch>
-      multi robot in rviz : roslaunch dsr_launcher multi_robot_rviz.launch
-      multi robot in gazebo : roslaunch dsr_launcher multi_robot_gazebo.launch
-      multi robot in rviz + gazebo : roslaunch dsr_launcher multi_robot_rviz_gazebo.launch
+      - multi robot in rviz : 
+      roslaunch dsr_launcher multi_robot_rviz.launch
+      - multi robot in gazebo : 
+      roslaunch dsr_launcher multi_robot_gazebo.launch
+      - multi robot in rviz + gazebo : 
+      roslaunch dsr_launcher multi_robot_rviz_gazebo.launch
     <run application node>
-      <cpp>
-        basic example : rosrun dsr_example_cpp multi_robot_basic
-        simple example : rosrun dsr_example_cpp multi_robot_simple
-      <py>
-        basic example : rosrun dsr_example_py multi_robot_basic.py
-        simple example : rosrun dsr_example_py multi_robot_simple.py
-      <ex>
+      rosrun dsr_example_py multi_robot_simple.py
+    <ex>
         roslaunch dsr_launcher multi_robot_rviz_gazebo.launch
-        rosrun dsr_example_cpp multi_robot  
+        rosrun dsr_example_py multi_robot.py  
 
 > _$ roslaunch dsr_launcher multi_robot_rviz_gazebo.launch_
 
-> _$ rosrun dsr_example_cpp multi_robot_
+> _$ rosrun dsr_example_py multi_robot.py_
 > <img src="https://user-images.githubusercontent.com/47092672/55622398-10092580-57db-11e9-8a23-b9dae4131897.png" width="70%">
 
 ###### robot + gripper
@@ -154,14 +165,11 @@ __If you don`t have real doosan controller, you must execute emulator before run
 roslaunch dsr_launcher single_robot_rviz.launch gripper:=robotiq_2f
 
 <run application node>
-  <cpp>
-    rosrun dsr_example_cpp pick_and_place
-  <python>
-    rosrun dsr_example_py pick_and_place.py
+  rosrun dsr_example_py pick_and_place.py
 ```
 - Serial Test(Loopback)
 ```bash
-rosrun dsr_example_cpp serial_example_node ttyUSB0 115200
+rosrun serial_example_node serial_example_node ttyUSB0 115200
 rostopic echo /serial_read
 rostopic pub /serial_write std_msgs/String 'data: 100'
 ```
@@ -175,10 +183,7 @@ rostopic pub /serial_write std_msgs/String 'data: 100'
 roslaunch dsr_launcher single_robot_rviz.launch mobile:=husky
   
 <run application node>
-  <cpp>
-    rosrun dsr_example_cpp single_robot_mobile
-  <python>
-    rosrun dsr_example_py single_robot_mobile.py
+  rosrun dsr_example_py single_robot_mobile.py
 ```
 
 > _$ roslaunch dsr_launcher single_robot_rviz mobile:=husky color:=blue_  
@@ -189,10 +194,7 @@ roslaunch dsr_launcher single_robot_rviz.launch mobile:=husky
 roslaunch dsr_launcher multi_robot_rviz.launch mobile:=husky
 
 <run application node>
-  <cpp>
-    rosrun dsr_example_cpp multi_robot_mobile
-  <python>
-    rosrun dsr_example_py multi_robot_mobile.py  
+  rosrun dsr_example_py multi_robot_mobile.py  
 ```
 
 > _$ roslaunch dsr_launcher multi_robot_rviz mobile:=husky_
@@ -200,8 +202,8 @@ roslaunch dsr_launcher multi_robot_rviz.launch mobile:=husky
 
     
 #### gazebo+rviz+virtual
-    roslaunch dsr_example test.launch
-    rosrun dsr_test_cpp dsr_test
+    roslaunch dsr_launcher single_robot_rviz_gazebo.launch
+    rosrun dsr_example_py single_robot_simple.py
 ```bash
   <include file="$(find dsr_gazebo)/launch/dsr_base.launch">
     <arg name="ns" value="dsr01"/> # Robot ID
@@ -247,14 +249,12 @@ radius: 0.0"
 ```
 # manuals
 
-[Manual(kor)](http://wiki.ros.org/doosan-robotics?action=AttachFile&do=get&target=Doosan_Robotics_ROS_Manual_ver0.92_190508A%28Kor.%29.pdf)
+[Manual(Kor)](http://wiki.ros.org/doosan-robotics?action=AttachFile&do=get&target=Doosan_Robotics_ROS_Manual_ver0.96_191121A%28Kor.pdf)
 
 
-[Manual(Eng)](http://wiki.ros.org/doosan-robotics?action=AttachFile&do=get&target=Doosan_Robotics_ROS_Manual_ver0.92_190508A%28EN.%29.pdf)
+[Manual(Eng)](http://wiki.ros.org/doosan-robotics?action=AttachFile&do=get&target=Doosan_Robotics_ROS_Manual_ver0.96_191121A%28EN.PDF)
 
 # demo
-
-Please contact __ros.robotics@doosan.com__ for demo usage instructions below.
 
 ### Doosan-Robots In Gazebo
 
