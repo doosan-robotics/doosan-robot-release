@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 
     //----- get param ---------------------
     int rate;
-    private_nh.param<int>("rate", rate, 50);
+    private_nh.param<int>("rate", rate, 100);
     ROS_INFO("rate is %d\n", rate);
     ros::Rate r(rate);
 
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
             if(pArm) pArm->read(elapsed);
             cm.update(ros::Time::now(), elapsed);
             if(pArm) pArm->write(elapsed);
-            r.sleep();
+            r.sleep();	//(1000/rate)[sec], default: 10ms 
         }
         catch(std::runtime_error& ex)
         {
