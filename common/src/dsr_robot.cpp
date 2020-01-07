@@ -685,6 +685,58 @@ int CDsrRobot::move_wait()
 
     return 0; 
 }
+
+int CDsrRobot::jog(int jog_axis, int move_reference, int speed)
+{
+    ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
+    ros::ServiceClient srvJog = node->serviceClient<dsr_msgs::Jog>(m_strSrvNamePrefix + "/motion/jog");
+
+    dsr_msgs::Jog srv;
+
+    srv.request.jog_axis = jog_axis;
+    srv.request.move_reference = move_reference;
+    srv.request.speed = speed;
+
+    if(srvJog.call(srv))
+    {         
+        return (srv.response.success);
+    }
+    else
+    {    
+        ROS_ERROR("Failed to call service dr_control_service : jog\n");
+        ros::shutdown();  
+        return -1;
+    }
+
+    return 0; 
+}
+
+int CDsrRobot::jog_multi(float jog_axis[NUM_TASK], int move_reference, int speed)
+{
+    ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
+    ros::ServiceClient srvJogMulti = node->serviceClient<dsr_msgs::JogMulti>(m_strSrvNamePrefix + "/motion/jog_multi");
+
+    dsr_msgs::JogMulti srv;
+
+    for(int i=0; i<NUM_TASK; i++)
+        srv.request.jog_axis[i] = jog_axis[i];
+    srv.request.move_reference = move_reference;
+    srv.request.speed = speed;
+
+    if(srvJogMulti.call(srv))
+    {         
+        return (srv.response.success);
+    }
+    else
+    {    
+        ROS_ERROR("Failed to call service dr_control_service : jog_multi\n");
+        ros::shutdown();  
+        return -1;
+    }
+
+    return 0; 
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1064,7 +1116,9 @@ int CDsrRobot::config_create_modbus(string strName,
                        int nPort, 
                        int nRegType, 
                        int nRegIndex, 
-                       int nRegValue/* = 0*/)
+                       int nRegValue,/* = 0*/
+                       int nSlaveID/* = 255*/
+                       )
 {
     ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
     ros::ServiceClient srvConfigCreateModbus = node->serviceClient<dsr_msgs::ConfigCreateModbus>(m_strSrvNamePrefix + "/modbus/config_create_modbus");
@@ -1076,6 +1130,7 @@ int CDsrRobot::config_create_modbus(string strName,
     srv.request.reg_type = nRegType;
     srv.request.index = nRegIndex;
     srv.request.value = nRegValue;
+    srv.request.slave_id = nSlaveID;
 
     if(srvConfigCreateModbus.call(srv))
     {         
