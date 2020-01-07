@@ -2,6 +2,15 @@
 Changelog for package dsr_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.0.2 (2020-01-07)
+------------------
+
+1.0.1 (2020-01-06)
+------------------
+* update install path
+* update 1.0.0
+* Contributors: doosan-robotics
+
 0.9.8 (2019-06-18)
 ------------------
 
