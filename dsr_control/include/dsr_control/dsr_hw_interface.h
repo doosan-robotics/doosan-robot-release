@@ -55,6 +55,7 @@
 #include <dsr_msgs/RobotError.h>
 #include <dsr_msgs/RobotState.h>
 #include <dsr_msgs/RobotStop.h>
+#include <dsr_msgs/JogMultiAxis.h>
 
 // service
 //system
@@ -62,12 +63,16 @@
 #include <dsr_msgs/GetRobotMode.h>
 #include <dsr_msgs/SetRobotSystem.h>
 #include <dsr_msgs/GetRobotSystem.h>
+#include <dsr_msgs/GetRobotState.h>
 #include <dsr_msgs/SetRobotSpeedMode.h>
 #include <dsr_msgs/GetRobotSpeedMode.h>
 #include <dsr_msgs/GetCurrentPose.h>
 #include <dsr_msgs/GetCurrentSolutionSpace.h>
 #include <dsr_msgs/SetSafeStopResetType.h>
 #include <dsr_msgs/GetLastAlarm.h>
+#include <dsr_msgs/GetExternalTorque.h>
+#include <dsr_msgs/GetJointTorque.h>
+#include <dsr_msgs/GetToolForce.h>
 
 // motion
 #include <dsr_msgs/MoveJoint.h>
@@ -81,6 +86,11 @@
 #include <dsr_msgs/MovePeriodic.h>
 #include <dsr_msgs/MoveWait.h>
 #include <dsr_msgs/Jog.h>
+#include <dsr_msgs/JogMulti.h>
+#include <dsr_msgs/MovePause.h>
+#include <dsr_msgs/MoveStop.h>
+#include <dsr_msgs/MoveResume.h>
+
 //io
 #include <dsr_msgs/SetCtrlBoxDigitalOutput.h>
 #include <dsr_msgs/GetCtrlBoxDigitalInput.h>
@@ -230,6 +240,7 @@ namespace dsr_control{
         std::string GetRobotModel();
 
     private:
+        int m_nVersionDRCF;
         ros::NodeHandle private_nh_;
 
         std::string m_strRobotName;
@@ -237,8 +248,8 @@ namespace dsr_control{
         std::string m_strRobotGripper;
 
         //----- Service ---------------------------------------------------------------
-        ros::ServiceServer m_nh_system[12];
-        ros::ServiceServer m_nh_move_service[12];
+        ros::ServiceServer m_nh_system[14];
+        ros::ServiceServer m_nh_move_service[20];
         ros::ServiceServer m_nh_io_service[8];
         ros::ServiceServer m_nh_modbus_service[4];
         ros::ServiceServer m_nh_drl_service[10];
@@ -252,11 +263,13 @@ namespace dsr_control{
         ros::Publisher m_PubRobotError;
         ros::Publisher m_PubtoGazebo;
         ros::Publisher m_PubSerialWrite;
+        ros::Publisher m_PubJogMultiAxis;
 
         //----- Subscriber ------------------------------------------------------------
         ros::Subscriber m_sub_joint_trajectory;
         ros::Subscriber m_sub_joint_position;
         ros::Subscriber m_SubSerialRead;
+        ros::Subscriber m_sub_jog_multi_axis;
 
         // ROS Interface
         hardware_interface::JointStateInterface jnt_state_interface;
@@ -275,8 +288,11 @@ namespace dsr_control{
 
         //----- SIG Handler --------------------------------------------------------------
         void sigint_handler( int signo);
+
         void trajectoryCallback(const control_msgs::FollowJointTrajectoryActionGoal::ConstPtr& msg);
         void positionCallback(const std_msgs::Float64MultiArray::ConstPtr& msg);
+
+        void jogCallback(const dsr_msgs::JogMultiAxis::ConstPtr& msg);
 
         //----- Threads ------------------------------------------------------------------
         boost::thread m_th_subscribe;   //subscribe thread
@@ -293,12 +309,17 @@ namespace dsr_control{
         bool get_robot_mode_cb(dsr_msgs::GetRobotMode::Request& req, dsr_msgs::GetRobotMode::Response& res);
         bool set_robot_system_cb(dsr_msgs::SetRobotSystem::Request& req, dsr_msgs::SetRobotSystem::Response& res);
         bool get_robot_system_cb(dsr_msgs::GetRobotSystem::Request& req, dsr_msgs::GetRobotSystem::Response& res);
+        bool get_robot_state_cb(dsr_msgs::GetRobotState::Request& req, dsr_msgs::GetRobotState::Response& res);
         bool set_robot_speed_mode_cb(dsr_msgs::SetRobotSpeedMode::Request& req, dsr_msgs::SetRobotSpeedMode::Response& res);
         bool get_robot_speed_mode_cb(dsr_msgs::GetRobotSpeedMode::Request& req, dsr_msgs::GetRobotSpeedMode::Response& res);
         bool get_current_pose_cb(dsr_msgs::GetCurrentPose::Request& req, dsr_msgs::GetCurrentPose::Response& res);
         bool get_current_solution_space_cb(dsr_msgs::GetCurrentSolutionSpace::Request& req, dsr_msgs::GetCurrentSolutionSpace::Response& res);
         bool set_safe_stop_reset_type_cb(dsr_msgs::SetSafeStopResetType::Request& req, dsr_msgs::SetSafeStopResetType::Response& res);
         bool get_last_alarm_cb(dsr_msgs::GetLastAlarm::Request& req, dsr_msgs::GetLastAlarm::Response& res);
+
+        bool get_external_torque_cb(dsr_msgs::GetExternalTorque::Request& req, dsr_msgs::GetExternalTorque::Response& res);
+        bool get_joint_torque_cb(dsr_msgs::GetJointTorque::Request& req, dsr_msgs::GetJointTorque::Response& res);
+        bool get_tool_force_cb(dsr_msgs::GetToolForce::Request& req, dsr_msgs::GetToolForce::Response& res);
 
         //----- MOTION
         bool movej_cb(dsr_msgs::MoveJoint::Request& req, dsr_msgs::MoveJoint::Response& res);
@@ -312,7 +333,10 @@ namespace dsr_control{
         bool moveperiodic_cb(dsr_msgs::MovePeriodic::Request& req, dsr_msgs::MovePeriodic::Response& res);
         bool movewait_cb(dsr_msgs::MoveWait::Request& req, dsr_msgs::MoveWait::Response& res);
         bool jog_cb(dsr_msgs::Jog::Request& req, dsr_msgs::Jog::Response& res);
-        
+        bool jog_multi_cb(dsr_msgs::JogMulti::Request& req, dsr_msgs::JogMulti::Response& res);
+        bool move_stop_cb(dsr_msgs::MoveStop::Request& req, dsr_msgs::MoveStop::Response& res);
+        bool move_resume_cb(dsr_msgs::MoveResume::Request& req, dsr_msgs::MoveResume::Response& res);
+        bool move_pause_cb(dsr_msgs::MovePause::Request& req, dsr_msgs::MovePause::Response& res);
 
         //----- TCP
         bool set_current_tcp_cb(dsr_msgs::SetCurrentTcp::Request& req, dsr_msgs::SetCurrentTcp::Response& res);
