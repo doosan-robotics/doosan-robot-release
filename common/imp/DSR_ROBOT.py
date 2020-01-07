@@ -6,7 +6,7 @@
 # @brief    Doosan Robotics ROS service I/F module
 # @author   kabdol2<kabkyoum.kim@doosan.com>   
 # @version  0.20
-# @Last update date     2018-12-17
+# @Last update date     2019-11-21
 # @details
 #
 # history
@@ -51,12 +51,16 @@ _ros_set_robot_mode             = rospy.ServiceProxy(_srv_name_prefix +"/system/
 _ros_get_robot_mode             = rospy.ServiceProxy(_srv_name_prefix +"/system/get_robot_mode", GetRobotMode)
 _ros_set_robot_system           = rospy.ServiceProxy(_srv_name_prefix +"/system/set_robot_system", SetRobotSystem)
 _ros_get_robot_system           = rospy.ServiceProxy(_srv_name_prefix +"/system/get_robot_system", GetRobotSystem)
+_ros_get_robot_state            = rospy.ServiceProxy(_srv_name_prefix +"/system/get_robot_state", GetRobotState)
 _ros_set_robot_speed_mode       = rospy.ServiceProxy(_srv_name_prefix +"/system/set_robot_speed_mode", SetRobotSpeedMode)
 _ros_get_robot_speed_mode       = rospy.ServiceProxy(_srv_name_prefix +"/system/get_robot_speed_mode", GetRobotSpeedMode)
 _ros_set_safe_stop_reset_type   = rospy.ServiceProxy(_srv_name_prefix +"/system/set_safe_stop_reset_type", SetSafeStopResetType)
-#_ros_get_last_alarm             = rospy.ServiceProxy(_srv_name_prefix +"/system/get_last_alarm", GetLastAlarm)
+_ros_get_last_alarm             = rospy.ServiceProxy(_srv_name_prefix +"/system/get_last_alarm", GetLastAlarm)
 _ros_get_current_pose           = rospy.ServiceProxy(_srv_name_prefix +"/system/get_current_pose", GetCurrentPose)
 _ros_get_current_solution_space = rospy.ServiceProxy(_srv_name_prefix +"/system/get_current_solution_space", GetCurrentSolutionSpace)
+_ros_get_external_torque        = rospy.ServiceProxy(_srv_name_prefix +"/system/get_external_torque", GetExternalTorque)
+_ros_get_joint_torque           = rospy.ServiceProxy(_srv_name_prefix +"/system/get_joint_torque", GetJointTorque)
+_ros_get_tool_force             = rospy.ServiceProxy(_srv_name_prefix +"/system/get_tool_force", GetToolForce)
 
 #  motion Operations
 _ros_movej                      = rospy.ServiceProxy(_srv_name_prefix +"/motion/move_joint", MoveJoint)
@@ -70,6 +74,7 @@ _ros_move_spiral                = rospy.ServiceProxy(_srv_name_prefix +"/motion/
 _ros_move_periodic              = rospy.ServiceProxy(_srv_name_prefix +"/motion/move_periodic", MovePeriodic)
 _ros_move_wait                  = rospy.ServiceProxy(_srv_name_prefix +"/motion/move_wait", MoveWait)
 _ros_jog                        = rospy.ServiceProxy(_srv_name_prefix +"/motion/jog", Jog)
+_ros_jog_multi                  = rospy.ServiceProxy(_srv_name_prefix +"/motion/jog_multi", JogMulti)
 
 #  GPIO Operations
 _ros_set_digital_output         = rospy.ServiceProxy(_srv_name_prefix +"/io/set_digital_output", SetCtrlBoxDigitalOutput)
@@ -273,6 +278,9 @@ _g_analog_output_mode_ch2 = -1
 
 ########################################################################################################################################
 
+def wait(second):
+    time.sleep(second)
+
 def print_ext_result(str):
     if DR_CONFIG_PRT_EXT_RESULT:
         # print("[{0}] / {1}".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()), str))
@@ -443,15 +451,15 @@ def set_robot_mode(robot_mode):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_set_robot_mode(robot_mode)
-    return ret
+        srv = _ros_set_robot_mode(robot_mode)
+    return srv.success
 
 def get_robot_mode():
 
     # ROS service call
     if __ROS__:
-        ret = _ros_get_robot_mode()
-    return ret
+        srv = _ros_get_robot_mode()
+    return srv.robot_mode
 
 def set_robot_system(robot_system):
     if type(robot_system) != int:
@@ -459,8 +467,8 @@ def set_robot_system(robot_system):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_set_robot_system(robot_system)
-    return ret
+        srv = _ros_set_robot_system(robot_system)
+    return srv.success
 
 def get_robot_system():
     # ROS service call
@@ -468,20 +476,26 @@ def get_robot_system():
         ret = _ros_get_robot_system()
     return ret
 
+def get_robot_state():
+    # ROS service call
+    if __ROS__:
+        srv = _ros_get_robot_state()
+    return srv.robot_state
+
 def set_robot_speed_mode(speed_mode):
     if type(speed_mode) != int:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : speed_mode")
 
     # ROS service call
     if __ROS__:
-        ret = _ros_set_robot_speed_mode(speed_mode)
-    return ret
+        srv = _ros_set_robot_speed_mode(speed_mode)
+    return srv.success
 
 def get_robot_speed_mode():
     # ROS service call
     if __ROS__:
-        ret = _ros_get_robot_speed_mode()
-    return ret
+        srv = _ros_get_robot_speed_mode()
+    return srv.speed_mode
 
 def set_safe_stop_reset_type(reset_type):
     if type(reset_type) != int:
@@ -489,8 +503,8 @@ def set_safe_stop_reset_type(reset_type):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_set_safe_stop_reset_type(reset_type)
-    return ret
+        srv = _ros_set_safe_stop_reset_type(reset_type)
+    return srv.success
 
 def get_current_pose(space_type):
     if type(space_type) != int:
@@ -498,20 +512,51 @@ def get_current_pose(space_type):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_get_current_pose(space_type)
-    return ret
+        srv = _ros_get_current_pose(space_type)
+    return srv.pos
 
 def get_current_solution_space():
     # ROS service call
     if __ROS__:
-        ret = _ros_get_current_solution_space()
-    return ret
+        srv = _ros_get_current_solution_space()
+    return srv.solution_space
 
-#def get_last_alarm():
+def get_current_posj():
     # ROS service call
-#    if __ROS__:
-#        ret = _ros_get_last_alarm()
-#    return ret
+    if __ROS__:
+        srv = _ros_get_current_pose(ROBOT_SPACE_JOINT)
+    return srv.pos
+
+def get_current_posx():
+    # ROS service call
+    if __ROS__:
+        srv_pos = _ros_get_current_pose(ROBOT_SPACE_TASK)
+        srv_sol = _ros_get_current_solution_space()        
+    return srv_pos.pos, srv_sol.solution_space 
+
+def get_external_torque():
+    # ROS service call
+    if __ROS__:
+        srv = _ros_get_external_torque()
+    return srv.ext_torque
+
+def get_joint_torque():
+    # ROS service call
+    if __ROS__:
+        srv = _ros_get_joint_torque()
+    return srv.joint_torque 
+
+def get_tool_force():
+    # ROS service call
+    if __ROS__:
+        srv = _ros_get_tool_force()
+    return srv.tool_force 
+
+def get_last_alarm():
+     #ROS service call
+    if __ROS__:
+        srv = _ros_get_last_alarm()
+    return srv.log_alarm
 
 ##### MOTION ##############################################################################################################################
 def movej(pos, vel=None, acc=None, time=None, radius=None, mod= DR_MV_MOD_ABS, ra=DR_MV_RA_DUPLICATE, v=None, a=None, t=None, r=None):
@@ -614,7 +659,8 @@ def _movej(pos, vel=None, acc=None, time=None, radius=None, mod= DR_MV_MOD_ABS, 
 
     # ROS service call
     if __ROS__: 
-        ret = _ros_movej(_pos, _vel[0], _acc[0], _time, mod, _radius, ra, _async)
+        srv = _ros_movej(_pos, _vel[0], _acc[0], _time, mod, _radius, ra, _async)
+        ret = srv.success
     else:   
         ret = PythonMgr.py_movej(_pos, _vel, _acc, _time, _radius, mod, ra, _async)
     return ret
@@ -739,7 +785,8 @@ def _movejx(pos, vel=None, acc=None, time=None, radius=None, ref=None, mod= DR_M
 
     # ROS service call
     if __ROS__: 
-        ret = _ros_movejx(_pos, sol, _vel[0], _acc[0], _time, mod, _ref, _radius, ra, _async)   
+        srv = _ros_movejx(_pos, sol, _vel[0], _acc[0], _time, mod, _ref, _radius, ra, _async)   
+        ret = srv.success
     else:    
         ret = PythonMgr.py_movejx(_pos, _vel, _acc, _time, _radius, _ref, mod, ra, sol, _async)
         print_ext_result("{0} = PythonMgr.py_movejx(pos:{1}, vel:{2}, acc:{3}, time:{4}, radius:{5}, ref{6}, mod{7}, ra:{8}, sol:{9}, async:{10})" \
@@ -877,7 +924,8 @@ def _movel(pos, vel=None, acc=None, time=None, radius=None, ref=None, mod=DR_MV_
 
     # ROS service call
     if __ROS__: 
-        ret = _ros_movel(_pos, _vel, _acc, _time, _radius, _ref, mod, ra, _async) 
+        srv = _ros_movel(_pos, _vel, _acc, _time, _radius, _ref, mod, ra, _async) 
+        res = srv.success
     else:    
         ret = PythonMgr.py_movel(_pos, _vel, _acc, _time, _radius, _ref, mod, ra, qcommand, _async)
         print_ext_result("{0} = PythonMgr.py_movel(pos:{1}, vel:{2}, acc:{3}, time:{4}, radius:{5}, ref:{6}, mod:{7}, ra:{8}, qcommand:{9}, async:{10})" \
@@ -1039,7 +1087,8 @@ def _movec(pos1, pos2, vel=None, acc=None, time=None, radius=None, ref=None, mod
         # make multi pos
         _circle_pos = _ros_listToFloat64MultiArray([_pos1, _pos2])
         #print(_circle_pos)
-        ret = _ros_movec(_circle_pos, _vel, _acc, _time, mod, _ref, _angle[0], _angle[1], _radius, ra, _async) 
+        srv = _ros_movec(_circle_pos, _vel, _acc, _time, mod, _ref, _angle[0], _angle[1], _radius, ra, _async) 
+        ret = srv.success
     else:   
         ret = PythonMgr.py_movec(_pos1, _pos2, _vel, _acc, _time, _radius, _ref, mod, _angle, ra, qcommand, _async)
         print_ext_result("{0} = PythonMgr.py_movec(pos1:{1}, pos2:{2}, vel:{3}, acc:{4}, time:{5}, radius:{6}, ref:{7}, mod:{8}, angle:{9}, ra:{10}, qcommand:{11}, async:{12})" \
@@ -1130,8 +1179,8 @@ def _movesj(pos_list, vel=None, acc=None, time=None, mod= DR_MV_MOD_ABS, v=None,
     if __ROS__:
         # make multi pos
         _spline_posj = _ros_listToFloat64MultiArray(pos_list)
-        ret = _ros_movesj(_spline_posj, len(_spline_posj), vel, acc, _time, mod, _async)
-
+        srv = _ros_movesj(_spline_posj, len(_spline_posj), vel, acc, _time, mod, _async)
+        ret = srv.success
     else:    
         ret = PythonMgr.py_movesj(pos_list, _vel, _acc, _time, mod, _async)
         print_ext_result("{0} = PythonMgr.py_movesj(pos_list:{1}, vel:{2}, acc:{3}, time:{4}, mod:{5} async:{6})" \
@@ -1249,7 +1298,8 @@ def _movesx(pos_list, vel=None, acc=None, time=None, ref=None, mod= DR_MV_MOD_AB
     # ROS service call
     if __ROS__:
         _spline_posx = _ros_listToFloat64MultiArray(pos_list)
-        ret = _ros_movesx(_spline_posx, len(_spline_posx), _vel, _acc, _time, mod, _ref, vel_opt, _async)
+        srv = _ros_movesx(_spline_posx, len(_spline_posx), _vel, _acc, _time, mod, _ref, vel_opt, _async)
+        ret = srv.success
     else:
         ret = PythonMgr.py_movesx(pos_list, _vel, _acc, _time, _ref, mod, vel_opt, _async)
         print_ext_result("{0} = PythonMgr.py_movesx(pos_list:{1}, vel:{2}, acc:{3}, time:{4}, ref:{5}, mod:{6}, vel_opt:{7}, async:{8})" \
@@ -1290,12 +1340,12 @@ def _moveb(seg_list, vel=None, acc=None, ref=None, time=None, mod=DR_MV_MOD_ABS,
         for s in range(0, len(_seg_list)):
             #print(s)
             for elemnt in range(0, len(_seg_list[s])):
-		        if _seg_list[s][elemnt] == None:	                
-			        _seg_list[s][elemnt] = [0.0]*POINT_COUNT
+                if _seg_list[s][elemnt] == None:
+                    _seg_list[s][elemnt] = [0.0]*POINT_COUNT
          
-            # make [pos1] + [pos2] + [type] + [radius]    
+            # make [pos1] + [pos2] + [type] + [radius]
             _tmp_list = _seg_list[s][1] + _seg_list[s][2] + [_seg_list[s][0]] + [_seg_list[s][3]]
-            _ros_seg_list.append(_tmp_list)            
+            _ros_seg_list.append(_tmp_list)
             
     # _vel
     temp = get_param(vel, v)
@@ -1380,7 +1430,8 @@ def _moveb(seg_list, vel=None, acc=None, ref=None, time=None, mod=DR_MV_MOD_ABS,
     # ROS Service call
     if __ROS__:
         seg = _ros_listToFloat64MultiArray(_ros_seg_list)
-        ret = _ros_moveb(seg, len(_ros_seg_list), _vel, _acc, _time, mod, _ref, _async)    
+        srv = _ros_moveb(seg, len(_ros_seg_list), _vel, _acc, _time, mod, _ref, _async)    
+        ret = srv.success
     else:
         ret = PythonMgr.py_moveb(_seg_list, _vel, _acc, _time, _ref, mod, _async)
         print_ext_result("{0} = PythonMgr.py_moveb(seg_list:{1}, vel:{2}, acc:{3}, time:{4}, ref:{5}, mod:{6}, async:{7})" \
@@ -1486,7 +1537,8 @@ def _move_spiral(rev=10, rmax=10, lmax=0, vel=None, acc=None, time=None, axis=DR
 
     # ROS service call
     if __ROS__:
-        ret = _ros_move_spiral(rev, rmax, lmax, _vel, _acc, _time, axis, ref, _async)
+        srv = _ros_move_spiral(rev, rmax, lmax, _vel, _acc, _time, axis, ref, _async)
+        ret = srv.success
     else:    
         ret = PythonMgr.py_move_spiral(rev, rmax, lmax, _vel, _acc, _time, axis, ref, _async)
         print_ext_result("{0} = PythonMgr.py_move_spiral(rev:{1}, rmax:{2}, lmax:{3}, vel:{4}, acc:{5}, time:{6}, axis:{7}, ref:{8}, async:{9})" \
@@ -1563,7 +1615,8 @@ def _move_periodic(amp, period, atime=None, repeat=None, ref=DR_TOOL, async=0):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_move_periodic(_amp, _period, _atime, _repeat, _ref, _async)    
+        srv = _ros_move_periodic(_amp, _period, _atime, _repeat, _ref, _async)    
+        ret = srv.success
     else:
         ret = PythonMgr.py_move_periodic(_amp, _period, _atime, _repeat, _ref, _async)
         print_ext_result("{0} = PythonMgr.move_periodic(amp:{1}, period:{2}, atime:{3}, repeat{4}, ref:{5}, async:{6})" \
@@ -1582,32 +1635,46 @@ def _move_wait(time):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_move_wait()  #ROS 에서는 time 인자를 사용하지 않음. 
+        srv = _ros_move_wait()  #ROS 에서는 time 인자를 사용하지 않음. 
+        ret = srv.success
     else:    
         ret = PythonMgr.py_mwait(time)
         print_ext_result("{0} = PythonMgr.py_mwait(time:{1})".format(ret, dr_form(time)))
     return ret
 
 def jog(jog_axis, ref=0, speed=0):
-    ret = _jog(jog_axis, ref, speed)
-    return ret
-
-def _jog(jog_axis, ref, speed):
-    if type(jog_axis) != int:
+    if type(jog_axis) != int and type(jog_axis) != float:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : jog_axis")
-
+    
     if type(ref) != int:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : ref")
 
+    if type(speed) != int and type(speed) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : speed")
     # ROS service call
     if __ROS__:
-        ret = _ros_jog(jog_axis, ref, speed) 
+        srv = _ros_jog(jog_axis, ref, speed)
+        ret = srv.success
     return ret
 
+def jog_multi(jog_axis_list, ref=0, speed=0):
+    if type(jog_axis_list) != list:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : jog_axis_list")
+   
+    if type(ref) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : ref")
+
+    if type(speed) != int and type(speed) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : speed")
+    # ROS service call
+    if __ROS__:
+        srv = _ros_jog_multi(jog_axis_list, ref, speed)
+        ret = srv.success
+    return ret
 
 ##############################################################################################################################
 
-def add_modbus_signal(ip, port, name, reg_type, index, value=0):
+def add_modbus_signal(ip, port, name, reg_type, index, value=0, slaveid=255):
     # ip
     if type(ip) != str:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : ip")
@@ -1655,13 +1722,22 @@ def add_modbus_signal(ip, port, name, reg_type, index, value=0):
     else:
         _value = 0
 
+    # slaveid
+    if type(slaveid) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : slaveid")
+    if slaveid < 0 or slaveid > 255:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : slaveid (Ranges: 0 or 1~247 or 255)")
+    elif slaveid > 247 and slaveid < 255:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : slaveid (Ranges: 0 or 1~247 or 255)")
+
     # ROS service call
     if __ROS__:
-        ret = _ros_add_modbus_signal(name, ip, port, reg_type, index, _value)
+        srv = _ros_add_modbus_signal(name, ip, port, reg_type, index, _value, slaveid)
+        ret = srv.success
     else:
-        ret = PythonMgr.py_add_modbus_signal(ip, port, name, reg_type, index, _value)
-        print_ext_result("{0} = PythonMgr.py_add_modbus_signal(ip:{1}, port:{2}, name:{3}, type:{4}, index:{5}, value:{6})" \
-                         .format(ret, ip, port, name, reg_type, index, _value))    
+        ret = PythonMgr.py_add_modbus_signal(ip, port, name, reg_type, index, _value, slaveid)
+        print_ext_result("{0} = PythonMgr.py_add_modbus_signal(ip:{1}, port:{2}, name:{3}, type:{4}, index:{5}, value:{6}, slaveid:{7})" \
+                         .format(ret, ip, port, name, reg_type, index, _value, slaveid))    
     return ret
 
 def del_modbus_signal(name):
@@ -1671,7 +1747,8 @@ def del_modbus_signal(name):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_del_modbus_signal(name) 
+        srv = _ros_del_modbus_signal(name) 
+        ret = srv.success
     else:
         ret = PythonMgr.py_del_modbus_signal(name)
         print_ext_result("{0} = PythonMgr.py_del_modbus_signal(name:{1})".format(ret, name))
@@ -1686,7 +1763,8 @@ def get_digital_input(index):
 
     # ROS service call
     if __ROS__:
-        value = _ros_get_digital_input(index)
+        srv = _ros_get_digital_input(index)
+        value = srv.value
     else:
         value = PythonMgr.py_get_digital_input(index)
         print_ext_result("{0} = PythonMgr.py_get_digital_input(index:{1})".format(value, index))
@@ -1701,7 +1779,8 @@ def get_analog_input(ch):
 
     # ROS service call
     if __ROS__:
-        value = _ros_get_analog_input(ch)
+        srv = _ros_get_analog_input(ch)
+        value = srv.value
     else:
         value = PythonMgr.py_get_analog_input(ch)
         print_ext_result("{0} = PythonMgr.py_get_analog_input(index:{1})".format(value, ch))
@@ -1716,7 +1795,8 @@ def get_tool_digital_input(index):
 
     # ROS service call
     if __ROS__:
-        value = _ros_get_tool_digital_input(index)
+        srv = _ros_get_tool_digital_input(index)
+        value = srv.value
     else:
         value = PythonMgr.py_get_tool_digital_input(index)
         print_ext_result("{0} = PythonMgr.py_get_tool_digital_input(index:{1})".format(value, index))
@@ -1728,7 +1808,8 @@ def get_modbus_input(iobus):
 
     # ROS service call
     if __ROS__:
-        value = _ros_get_modbus_input(iobus)
+        srv = _ros_get_modbus_input(iobus)
+        value = srv.value
     else:    
         value = PythonMgr.py_get_modbus_input(iobus)
         print_ext_result("{0} = PythonMgr.py_get_modbus_input(iobus:{1})".format(value, iobus))
@@ -1760,7 +1841,8 @@ def set_digital_output(index, val=None):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_set_digital_output(index, val) 
+        srv = _ros_set_digital_output(index, val) 
+        ret = srv.success
     else:
         ret = PythonMgr.py_set_digital_output(index, val)
         print_ext_result("{0} = PythonMgr.py_set_digital_output(index:{1}, val:{2})".format(ret, index, val))
@@ -1802,7 +1884,8 @@ def set_analog_output(ch, val):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_set_analog_output(ch, val) 
+        srv = _ros_set_analog_output(ch, val) 
+        ret = srv.success
     else:
         ret = PythonMgr.py_set_analog_output(ch, val)
         print_ext_result("{0} = PythonMgr.py_set_analog_output(ch:{1}, val:{2})".format(ret, ch, val))   
@@ -1831,7 +1914,8 @@ def set_mode_analog_output(ch, mod):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_set_mode_analog_output(ch, mod)
+        srv = _ros_set_mode_analog_output(ch, mod)
+        ret = srv.success
     else:
         ret = PythonMgr.py_set_mode_analog_output(ch, mod)
         print_ext_result("{0} = PythonMgr.py_set_mode_analog_output(ch:{1}, mod:{2})".format(ret, ch, mod))
@@ -1852,7 +1936,8 @@ def set_mode_analog_input(ch, mod):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_set_mode_analog_input(ch, mod)
+        srv = _ros_set_mode_analog_input(ch, mod)
+        ret = srv.success
     else:
         ret = PythonMgr.py_set_mode_analog_input(ch, mod)
         print_ext_result("{0} = PythonMgr.py_set_mode_analog_input(ch:{1}, mod:{2})".format(ret, ch, mod))
@@ -1884,7 +1969,8 @@ def set_tool_digital_output(index, val=None):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_set_tool_digital_output(iobus, val)   
+        srv = _ros_set_tool_digital_output(iobus, val)   
+        ret = srv.success
     else:
         ret = PythonMgr.py_set_tool_digital_output(index, val)
         print_ext_result("{0} = PythonMgr.py_set_tool_digital_output(index:{1}, val:{2})".format(ret, index, val))
@@ -1903,7 +1989,8 @@ def set_modbus_output(iobus, val):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_set_modbus_output(iobus, val) 
+        srv = _ros_set_modbus_output(iobus, val) 
+        ret = srv.success
     else:
         ret = PythonMgr.py_set_modbus_output(iobus, val)
         print_ext_result("{0} = PythonMgr.py_set_modbus_output(iobus:{1}, val:{2})".format(ret, iobus, val))
@@ -1921,7 +2008,8 @@ def set_tcp(name):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_set_current_tcp(name) 
+        srv = _ros_set_current_tcp(name) 
+        ret = srv.success
     else:
         ret = PythonMgr.py_set_tcp(name)
         print_ext_result("{0} = PythonMgr.py_set_tcp(name:{1})".format(ret, name))
@@ -1930,8 +2018,8 @@ def set_tcp(name):
 def get_tcp():
     # ROS service call
     if __ROS__:
-        ret = _ros_get_current_tcp() 
-    return ret
+        srv = _ros_get_current_tcp()        
+    return srv.info
 
 def set_tool(name):
 
@@ -1944,7 +2032,8 @@ def set_tool(name):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_set_current_tool(name)    
+        srv = _ros_set_current_tool(name)    
+        ret = srv.success
     else:
         ret = PythonMgr.py_set_tool(name)
         print_ext_result("{0} = PythonMgr.py_set_tool(name:{1})".format(ret, name))
@@ -1953,8 +2042,8 @@ def set_tool(name):
 def get_tool():
     # ROS service call
     if __ROS__:
-        ret = _ros_get_current_tool() 
-    return ret
+        srv = _ros_get_current_tool() 
+    return srv.info
 
 ###########################################################################################################
 
@@ -1964,7 +2053,8 @@ def add_tcp(name, pos):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_config_create_tcp(name, pos)  
+        srv = _ros_config_create_tcp(name, pos)  
+        ret = srv.success
     return ret
 
 def del_tcp(name):
@@ -1973,7 +2063,8 @@ def del_tcp(name):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_config_delete_tcp(name)  
+        srv = _ros_config_delete_tcp(name)  
+        ret = srv.success
     return ret
 
 def add_tool(name, weight, cog, inertia):
@@ -1982,7 +2073,8 @@ def add_tool(name, weight, cog, inertia):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_config_create_tool(name, weight, cog, inertia) 
+        srv = _ros_config_create_tool(name, weight, cog, inertia) 
+        ret = srv.success
     return ret
 
 def del_tool(name):
@@ -1991,7 +2083,8 @@ def del_tool(name):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_config_delete_tool(name)  
+        srv = _ros_config_delete_tool(name)  
+        ret = srv.success
     return ret
 
 def drl_script_run(robotSystem, code):
@@ -2000,7 +2093,8 @@ def drl_script_run(robotSystem, code):
 
     # ROS service call
     if __ROS__:
-        ret = _ros_drl_start(robotSystem, code)
+        srv = _ros_drl_start(robotSystem, code)
+        ret = srv.success
     return ret
 
 def drl_script_stop(stop_mode):
@@ -2009,25 +2103,29 @@ def drl_script_stop(stop_mode):
     print("drl_script_stop")
     # ROS service call
     if __ROS__:
-        ret = _ros_drl_stop(stop_mode)  
+        srv = _ros_drl_stop(stop_mode)  
+        ret = srv.success
     return ret
 
 def drl_script_pause():
     # ROS service call
     if __ROS__:
-        ret = _ros_drl_pause()  
+        srv = _ros_drl_pause()  
+        ret = srv.success
     return ret
 
 def drl_script_resume():
     # ROS service call
     if __ROS__:
-        ret = _ros_drl_resume()  
+        srv = _ros_drl_resume()  
+        ret = srv.success
     return ret
 
 def get_drl_state():
     # ROS service call
     if __ROS__:
-        ret = _ros_get_drl_state()  
+        srv = _ros_get_drl_state()  
+        ret = srv.drl_state
     return ret
 
 ########################################################################################################################################
@@ -2050,12 +2148,17 @@ class CDsrRobot:
         self._ros_get_robot_mode            = rospy.ServiceProxy(self._srv_name_prefix +"/system/get_robot_mode", GetRobotMode)
         self._ros_set_robot_system          = rospy.ServiceProxy(self._srv_name_prefix +"/system/set_robot_system", SetRobotSystem)
         self._ros_get_robot_system          = rospy.ServiceProxy(self._srv_name_prefix +"/system/get_robot_system", GetRobotSystem)
-        self._ros_set_robot_speed_mode      = rospy.ServiceProxy(self._srv_name_prefix +"/system/set_robot_speed_mode", SetRobotSpeedmode)
-        self._ros_get_robot_speed_mode      = rospy.ServiceProxy(self._srv_name_prefix +"/system/get_robot_speed_mode", GetRobotSpeedmode)
+        self._ros_get_robot_state           = rospy.ServiceProxy(self._srv_name_prefix + "/system/get_robot_state", GetRobotState)
+        self._ros_set_robot_speed_mode      = rospy.ServiceProxy(self._srv_name_prefix +"/system/set_robot_speed_mode", SetRobotSpeedMode)
+        self._ros_get_robot_speed_mode      = rospy.ServiceProxy(self._srv_name_prefix +"/system/get_robot_speed_mode", GetRobotSpeedMode)
         self._ros_set_safe_stop_reset_type  = rospy.ServiceProxy(self._srv_name_prefix +"/system/set_safe_stop_reset_type", SetSafeStopResetType)
-        #self._ros_get_last_alarm            = rospy.ServiceProxy(self._srv_name_prefix +"/system/get_last_alarm", GetLastAlarm)
+        self._ros_get_last_alarm            = rospy.ServiceProxy(self._srv_name_prefix +"/system/get_last_alarm", GetLastAlarm)
         self._ros_get_current_pose          = rospy.ServiceProxy(self._srv_name_prefix +"/system/get_current_pose", GetCurrentPose)
         self._ros_get_current_solution_space= rospy.ServiceProxy(self._srv_name_prefix +"/system/get_current_solution_space", GetCurrentSolutionSpace)
+        self._ros_get_external_torque       = rospy.ServiceProxy(self._srv_name_prefix +"/system/get_external_torque", GetExternalTorque)
+        self._ros_get_joint_torque          = rospy.ServiceProxy(self._srv_name_prefix +"/system/get_joint_torque", GetJointTorque)
+        self._ros_get_tool_force            = rospy.ServiceProxy(self._srv_name_prefix +"/system/get_tool_force", GetToolForce)
+
 
         #  motion Operations
         self._ros_movej                      = rospy.ServiceProxy(self._srv_name_prefix +"/motion/move_joint", MoveJoint)
@@ -2069,6 +2172,7 @@ class CDsrRobot:
         self._ros_move_periodic              = rospy.ServiceProxy(self._srv_name_prefix +"/motion/move_periodic", MovePeriodic)
         self._ros_move_wait                  = rospy.ServiceProxy(self._srv_name_prefix +"/motion/move_wait", MoveWait)
         self._ros_jog                        = rospy.ServiceProxy(self._srv_name_prefix +"/motion/jog", Jog)
+        self._ros_jog_multi                  = rospy.ServiceProxy(self._srv_name_prefix +"/motion/jog_multi", JogMulti)
 
         #  GPIO Operations
         self._ros_set_digital_output         = rospy.ServiceProxy(self._srv_name_prefix +"/io/set_digital_output", SetCtrlBoxDigitalOutput)
@@ -2131,13 +2235,15 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_set_robot_mode(robot_mode)
+            srv = self._ros_set_robot_mode(robot_mode)
+            ret = srv.success
         return ret
 
     def get_robot_mode(self):
         # ROS service call
         if __ROS__:
-            ret = self._ros_get_robot_mode()
+            srv = self._ros_get_robot_mode()
+            ret = srv.robot_mode
         return ret
 
         
@@ -2147,13 +2253,22 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_set_robot_system(robot_system)
+            srv = self._ros_set_robot_system(robot_system)
+            ret = srv.success
         return ret
 
     def get_robot_system(self):
         # ROS service call
         if __ROS__:
-            ret = self._ros_get_robot_system()
+            srv = self._ros_get_robot_system()
+            ret = srv.robot_system
+        return ret
+
+    def get_robot_state(self):
+        # ROS service call
+        if __ROS__:
+            srv = self._ros_get_robot_state()
+            ret = srv.robot_state
         return ret
 
     def set_robot_speed_mode(self, speed_mode):
@@ -2162,13 +2277,15 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_set_robot_speed_mode(speed_mode)
+            srv = self._ros_set_robot_speed_mode(speed_mode)
+            ret = srv.success
         return ret
 
     def get_robot_speed_mode(self):
         # ROS service call
         if __ROS__:
-            ret = self._ros_get_robot_speed_mode()
+            srv = self._ros_get_robot_speed_mode()
+            ret = srv.speed_mode
         return ret
 
     def set_safe_stop_reset_type(self, reset_type):
@@ -2177,7 +2294,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_set_safe_stop_reset_type(reset_type)
+            srv = self._ros_set_safe_stop_reset_type(reset_type)
+            ret = srv.success
         return ret
 
     def get_current_pose(self, space_type):
@@ -2186,20 +2304,52 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_get_current_pose(space_type)
-        return ret
+            srv = self._ros_get_current_pose(space_type)
+        return srv.pos
 
     def get_current_solution_space(self):
         # ROS service call
         if __ROS__:
-            ret = self._ros_get_current_solution_space()
-        return ret
+            srv = self._ros_get_current_solution_space()            
+        return srv.solution_space
 
-    #def get_last_alarm(self):
+    def get_current_posj(self):
         # ROS service call
-    #    if __ROS__:
-    #        ret = self._ros_get_last_alarm()
-    #    return ret
+        if __ROS__:
+            srv = self._ros_get_current_pose(ROBOT_SPACE_JOINT)            
+        return srv_pos.pos
+
+    def get_current_posx(self):
+        # ROS service call
+        if __ROS__:
+            srv_pos = self._ros_get_current_pose(ROBOT_SPACE_TASK)
+            srv_sol = self._ros_get_current_solution_space()        
+        return srv_pos.pos, srv_sol.solution_space 
+
+    def get_external_torque():
+        # ROS service call
+        if __ROS__:
+            srv = self._ros_get_external_torque()
+        return srv.ext_torque
+
+    def get_joint_torque():
+        # ROS service call
+        if __ROS__:
+            srv = self._ros_get_joint_torque()
+        return srv.joint_torque 
+
+    def get_tool_force():
+        # ROS service call
+        if __ROS__:
+            srv = self._ros_get_tool_force()
+        return srv.tool_force 
+
+    def get_last_alarm(self):
+        # ROS service call
+        if __ROS__:
+            srv = self._ros_get_last_alarm()
+        return srv.log_alarm
+
     ##### MOTION ##############################################################################################################################
     def movej(self, pos, vel=None, acc=None, time=None, radius=None, mod= DR_MV_MOD_ABS, ra=DR_MV_RA_DUPLICATE, v=None, a=None, t=None, r=None):
         ret = self._movej(pos, vel, acc, time, radius, mod, ra, v, a, t, r, async=0)
@@ -2301,7 +2451,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__: 
-            ret = self._ros_movej(_pos, _vel[0], _acc[0], _time, mod, _radius, ra, _async)
+            srv = self._ros_movej(_pos, _vel[0], _acc[0], _time, mod, _radius, ra, _async)
+            ret = srv.success
         else:   
             ret = PythonMgr.py_movej(_pos, _vel, _acc, _time, _radius, mod, ra, _async)
         return ret
@@ -2426,7 +2577,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__: 
-            ret = self._ros_movejx(_pos, sol, _vel[0], _acc[0], _time, mod, _ref, _radius, ra, _async)   
+            srv = self._ros_movejx(_pos, sol, _vel[0], _acc[0], _time, mod, _ref, _radius, ra, _async)   
+            ret = srv.success
         else:    
             ret = PythonMgr.py_movejx(_pos, _vel, _acc, _time, _radius, _ref, mod, ra, sol, _async)
             print_ext_result("{0} = PythonMgr.py_movejx(pos:{1}, vel:{2}, acc:{3}, time:{4}, radius:{5}, ref{6}, mod{7}, ra:{8}, sol:{9}, async:{10})" \
@@ -2564,7 +2716,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__: 
-            ret = self._ros_movel(_pos, _vel, _acc, _time, _radius, _ref, mod, ra, _async) 
+            srv = self._ros_movel(_pos, _vel, _acc, _time, _radius, _ref, mod, ra, _async) 
+            res = srv.success
         else:    
             ret = PythonMgr.py_movel(_pos, _vel, _acc, _time, _radius, _ref, mod, ra, qcommand, _async)
             print_ext_result("{0} = PythonMgr.py_movel(pos:{1}, vel:{2}, acc:{3}, time:{4}, radius:{5}, ref:{6}, mod:{7}, ra:{8}, qcommand:{9}, async:{10})" \
@@ -2726,7 +2879,8 @@ class CDsrRobot:
             # make multi pos
             _circle_pos = _ros_listToFloat64MultiArray([_pos1, _pos2])
             #print(_circle_pos)
-            ret = self._ros_movec(_circle_pos, _vel, _acc, _time, mod, _ref, _angle[0], _angle[1], _radius, ra, _async) 
+            srv = self._ros_movec(_circle_pos, _vel, _acc, _time, mod, _ref, _angle[0], _angle[1], _radius, ra, _async) 
+            ret = srv.success
         else:   
             ret = PythonMgr.py_movec(_pos1, _pos2, _vel, _acc, _time, _radius, _ref, mod, _angle, ra, qcommand, _async)
             print_ext_result("{0} = PythonMgr.py_movec(pos1:{1}, pos2:{2}, vel:{3}, acc:{4}, time:{5}, radius:{6}, ref:{7}, mod:{8}, angle:{9}, ra:{10}, qcommand:{11}, async:{12})" \
@@ -2817,7 +2971,8 @@ class CDsrRobot:
         if __ROS__:
             # make multi pos
             _spline_posj = _ros_listToFloat64MultiArray(pos_list)
-            ret = self._ros_movesj(_spline_posj, len(_spline_posj), vel, acc, _time, mod, _async)
+            srv = self._ros_movesj(_spline_posj, len(_spline_posj), vel, acc, _time, mod, _async)
+            ret = srv.success
         else:    
             ret = PythonMgr.py_movesj(pos_list, _vel, _acc, _time, mod, _async)
             print_ext_result("{0} = PythonMgr.py_movesj(pos_list:{1}, vel:{2}, acc:{3}, time:{4}, mod:{5} async:{6})" \
@@ -2935,7 +3090,8 @@ class CDsrRobot:
         # ROS service call
         if __ROS__:
             _spline_posx = _ros_listToFloat64MultiArray(pos_list)
-            ret = self._ros_movesx(_spline_posx, len(_spline_posx), _vel, _acc, _time, mod, _ref, vel_opt, _async)
+            srv = self._ros_movesx(_spline_posx, len(_spline_posx), _vel, _acc, _time, mod, _ref, vel_opt, _async)
+            ret = srv.success
         else:
             ret = PythonMgr.py_movesx(pos_list, _vel, _acc, _time, _ref, mod, vel_opt, _async)
             print_ext_result("{0} = PythonMgr.py_movesx(pos_list:{1}, vel:{2}, acc:{3}, time:{4}, ref:{5}, mod:{6}, vel_opt:{7}, async:{8})" \
@@ -2976,8 +3132,8 @@ class CDsrRobot:
             for s in range(0, len(_seg_list)):
                 #print(s)
                 for elemnt in range(0, len(_seg_list[s])):
-    		        if _seg_list[s][elemnt] == None:	                
-    			        _seg_list[s][elemnt] = [0.0]*POINT_COUNT
+                    if _seg_list[s][elemnt] == None:	                
+                        _seg_list[s][elemnt] = [0.0]*POINT_COUNT
 
                 # make [pos1] + [pos2] + [type] + [radius]    
                 _tmp_list = _seg_list[s][1] + _seg_list[s][2] + [_seg_list[s][0]] + [_seg_list[s][3]]
@@ -3066,7 +3222,8 @@ class CDsrRobot:
         # ROS Service call
         if __ROS__:
             seg = _ros_listToFloat64MultiArray(_ros_seg_list)
-            ret = self._ros_moveb(seg, len(_ros_seg_list), _vel, _acc, _time, mod, _ref, _async)    
+            srv = self._ros_moveb(seg, len(_ros_seg_list), _vel, _acc, _time, mod, _ref, _async)    
+            ret = srv.success
         else:
             ret = PythonMgr.py_moveb(_seg_list, _vel, _acc, _time, _ref, mod, _async)
             print_ext_result("{0} = PythonMgr.py_moveb(seg_list:{1}, vel:{2}, acc:{3}, time:{4}, ref:{5}, mod:{6}, async:{7})" \
@@ -3172,7 +3329,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_move_spiral(rev, rmax, lmax, _vel, _acc, _time, axis, ref, _async)
+            srv = self._ros_move_spiral(rev, rmax, lmax, _vel, _acc, _time, axis, ref, _async)
+            ret = srv.success
         else:    
             ret = PythonMgr.py_move_spiral(rev, rmax, lmax, _vel, _acc, _time, axis, ref, _async)
             print_ext_result("{0} = PythonMgr.py_move_spiral(rev:{1}, rmax:{2}, lmax:{3}, vel:{4}, acc:{5}, time:{6}, axis:{7}, ref:{8}, async:{9})" \
@@ -3249,7 +3407,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_move_periodic(_amp, _period, _atime, _repeat, _ref, _async)    
+            srv = self._ros_move_periodic(_amp, _period, _atime, _repeat, _ref, _async)    
+            ret = srv.success
         else:
             ret = PythonMgr.py_move_periodic(_amp, _period, _atime, _repeat, _ref, _async)
             print_ext_result("{0} = PythonMgr.move_periodic(amp:{1}, period:{2}, atime:{3}, repeat{4}, ref:{5}, async:{6})" \
@@ -3271,24 +3430,48 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_move_wait()  #ROS 에서는 time 인자를 사용하지 않음. 
+            srv = self._ros_move_wait()  #ROS 에서는 time 인자를 사용하지 않음. 
+            ret = srv.success
         else:    
             ret = PythonMgr.py_mwait(time)
             print_ext_result("{0} = PythonMgr.py_mwait(time:{1})".format(ret, dr_form(time)))
         return ret
 
     def jog(self, jog_axis, ref=0, speed=0):
-        ret = self._jog(jog_axis, ref, speed)
-        return ret
+        if type(jog_axis) != int and type(jog_axis) != float:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : jog_axis")
+        
+        if type(ref) != int:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : ref")
 
-    def _jog(self, jog_axis, ref, speed):
+        if type(speed) != int and type(speed) != float:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : speed")
+
         # ROS service call
         if __ROS__:
-            ret = self._ros_jog(jog_axis, ref, speed)
+            srv = self._ros_jog(jog_axis, ref, speed)
+            ret = srv.success
         return ret
+
+    def jog_multi(self, jog_axis_list, ref=0, speed=0):
+        if type(jog_axis_list) != list:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : jog_axis_list")
+        
+        if type(ref) != int:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : ref")
+
+        if type(speed) != int and type(speed) != float:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : speed")
+
+        # ROS service call
+        if __ROS__:
+            srv = self._ros_jog_multi(jog_axis_list, ref, speed)
+            ret = srv.success
+        return ret
+
     ##############################################################################################################################
 
-    def add_modbus_signal(self, ip, port, name, reg_type, index, value=0):
+    def add_modbus_signal(self, ip, port, name, reg_type, index, value=0, slaveid=255):
         # ip
         if type(ip) != str:
             raise DR_Error(DR_ERROR_TYPE, "Invalid type : ip")
@@ -3336,13 +3519,22 @@ class CDsrRobot:
         else:
             _value = 0
 
+        # slaveid
+        if type(slaveid) != int:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : slaveid")
+        if slaveid < 0 or slaveid > 255:
+            raise DR_Error(DR_ERROR_VALUE, "Invalid value : slaveid (Ranges: 0 or 1~247 or 255)")
+        elif slaveid > 247 and slaveid < 255:
+            raise DR_Error(DR_ERROR_VALUE, "Invalid value : slaveid (Ranges: 0 or 1~247 or 255)")
+
         # ROS service call
         if __ROS__:
-            ret = self._ros_add_modbus_signal(name, ip, port, reg_type, index, _value)
+            srv = self._ros_add_modbus_signal(name, ip, port, reg_type, index, _value, slaveid)
+            ret = srv.success
         else:
-            ret = PythonMgr.py_add_modbus_signal(ip, port, name, reg_type, index, _value)
-            print_ext_result("{0} = PythonMgr.py_add_modbus_signal(ip:{1}, port:{2}, name:{3}, type:{4}, index:{5}, value:{6})" \
-                             .format(ret, ip, port, name, reg_type, index, _value))    
+            ret = PythonMgr.py_add_modbus_signal(ip, port, name, reg_type, index, _value, slaveid)
+            print_ext_result("{0} = PythonMgr.py_add_modbus_signal(ip:{1}, port:{2}, name:{3}, type:{4}, index:{5}, value:{6}, slaveid:{7})" \
+                             .format(ret, ip, port, name, reg_type, index, _value, slaveid))    
         return ret
 
     def del_modbus_signal(self, name):
@@ -3352,7 +3544,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_del_modbus_signal(name) 
+            srv = self._ros_del_modbus_signal(name) 
+            ret = srv.success
         else:
             ret = PythonMgr.py_del_modbus_signal(name)
             print_ext_result("{0} = PythonMgr.py_del_modbus_signal(name:{1})".format(ret, name))
@@ -3367,7 +3560,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            value = self._ros_get_digital_input(index)
+            srv = self._ros_get_digital_input(index)
+            value = srv.value
         else:
             value = PythonMgr.py_get_digital_input(index)
             print_ext_result("{0} = PythonMgr.py_get_digital_input(index:{1})".format(value, index))
@@ -3382,7 +3576,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            value = self._ros_get_analog_input(ch)
+            srv = self._ros_get_analog_input(ch)
+            value = srv.value
         else:
             value = PythonMgr.py_get_analog_input(ch)
             print_ext_result("{0} = PythonMgr.py_get_analog_input(index:{1})".format(value, ch))
@@ -3397,7 +3592,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            value = self._ros_get_tool_digital_input(index)
+            srv = self._ros_get_tool_digital_input(index)
+            value = srv.value
         else:
             value = PythonMgr.py_get_tool_digital_input(index)
             print_ext_result("{0} = PythonMgr.py_get_tool_digital_input(index:{1})".format(value, index))
@@ -3409,7 +3605,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            value = self._ros_get_modbus_input(iobus)
+            srv = self._ros_get_modbus_input(iobus)
+            value = srv.value
         else:    
             value = PythonMgr.py_get_modbus_input(iobus)
             print_ext_result("{0} = PythonMgr.py_get_modbus_input(iobus:{1})".format(value, iobus))
@@ -3428,7 +3625,7 @@ class CDsrRobot:
 
             if val != ON and val != OFF:
                 raise DR_Error(DR_ERROR_VALUE, "Invalid value : val")
-        else: # # val ���ڰ� ������ simple style
+        else: # val 인자가 생략된 simple style
             if (index < (-DR_DIO_MAX_INDEX)) or (index > DR_DIO_MAX_INDEX) or (index==0): # -16~+16
                 raise DR_Error(DR_ERROR_VALUE, "Invalid value : index")
             else:
@@ -3441,7 +3638,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_set_digital_output(index, val) 
+            srv = self._ros_set_digital_output(index, val) 
+            ret = srv.success
         else:
             ret = PythonMgr.py_set_digital_output(index, val)
             print_ext_result("{0} = PythonMgr.py_set_digital_output(index:{1}, val:{2})".format(ret, index, val))
@@ -3483,7 +3681,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_set_analog_output(ch, val) 
+            srv = self._ros_set_analog_output(ch, val) 
+            ret = srv.success
         else:
             ret = PythonMgr.py_set_analog_output(ch, val)
             print_ext_result("{0} = PythonMgr.py_set_analog_output(ch:{1}, val:{2})".format(ret, ch, val))   
@@ -3512,7 +3711,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_set_mode_analog_output(ch, mod)
+            srv = self._ros_set_mode_analog_output(ch, mod)
+            ret = srv.success
         else:
             ret = PythonMgr.py_set_mode_analog_output(ch, mod)
             print_ext_result("{0} = PythonMgr.py_set_mode_analog_output(ch:{1}, mod:{2})".format(ret, ch, mod))
@@ -3533,7 +3733,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_set_mode_analog_input(ch, mod)
+            srv = self._ros_set_mode_analog_input(ch, mod)
+            ret = srv.success
         else:
             ret = PythonMgr.py_set_mode_analog_input(ch, mod)
             print_ext_result("{0} = PythonMgr.py_set_mode_analog_input(ch:{1}, mod:{2})".format(ret, ch, mod))
@@ -3565,7 +3766,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_set_tool_digital_output(iobus, val)   
+            srv = self._ros_set_tool_digital_output(iobus, val)   
+            ret = srv.success
         else:
             ret = PythonMgr.py_set_tool_digital_output(index, val)
             print_ext_result("{0} = PythonMgr.py_set_tool_digital_output(index:{1}, val:{2})".format(ret, index, val))
@@ -3584,7 +3786,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_set_modbus_output(iobus, val) 
+            srv = self._ros_set_modbus_output(iobus, val) 
+            ret = srv.success
         else:
             ret = PythonMgr.py_set_modbus_output(iobus, val)
             print_ext_result("{0} = PythonMgr.py_set_modbus_output(iobus:{1}, val:{2})".format(ret, iobus, val))
@@ -3602,7 +3805,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_set_current_tcp(name) 
+            srv = self._ros_set_current_tcp(name) 
+            ret = srv.success
         else:
             ret = PythonMgr.py_set_tcp(name)
             print_ext_result("{0} = PythonMgr.py_set_tcp(name:{1})".format(ret, name))
@@ -3615,8 +3819,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_get_current_tcp() 
-        return ret
+            srv = self._ros_get_current_tcp() 
+        return srv.info
 
     def set_tool(self, name):
 
@@ -3629,7 +3833,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_set_current_tool(name)    
+            srv = self._ros_set_current_tool(name)    
+            ret = srv.success
         else:
             ret = PythonMgr.py_set_tool(name)
             print_ext_result("{0} = PythonMgr.py_set_tool(name:{1})".format(ret, name))
@@ -3638,8 +3843,8 @@ class CDsrRobot:
     def get_tool(self):
         # ROS service call
         if __ROS__:
-            ret = self._ros_get_current_tool()
-        return ret
+            srv = self._ros_get_current_tool()
+        return srv.info
 
 
     ###########################################################################################################
@@ -3650,7 +3855,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_config_create_tcp(name, pos)  
+            srv = self._ros_config_create_tcp(name, pos)  
+            ret = srv.success
         return ret
 
     def del_tcp(self, name):
@@ -3659,7 +3865,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_config_delete_tcp(name)  
+            srv = self._ros_config_delete_tcp(name)  
+            ret = srv.success
         return ret
 
     def add_tool(self, name, weight, cog, inertia):
@@ -3668,7 +3875,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_config_create_tool(name, weight, cog, inertia) 
+            srv = self._ros_config_create_tool(name, weight, cog, inertia) 
+            ret = srv.success
         return ret
 
     def del_tool(self, name):
@@ -3677,7 +3885,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_config_delete_tool(name)  
+            srv = self._ros_config_delete_tool(name)  
+            ret = srv.success
         return ret
 
     def drl_script_run(self, robotSystem, code):
@@ -3686,7 +3895,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_drl_start(robotSystem, code)
+            srv = self._ros_drl_start(robotSystem, code)
+            ret = srv.success
         return ret
 
     def drl_script_stop(self, stop_mode):
@@ -3695,7 +3905,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_drl_stop(stop_mode)  
+            srv = self._ros_drl_stop(stop_mode)  
+            ret = srv.success
         return ret
 
     def drl_script_pause(self):
@@ -3704,7 +3915,8 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_drl_pause()  
+            srv = self._ros_drl_pause()  
+            ret = srv.success
         return ret
 
     def drl_script_resume(self):
@@ -3713,11 +3925,13 @@ class CDsrRobot:
 
         # ROS service call
         if __ROS__:
-            ret = self._ros_drl_resume()  
+            srv = self._ros_drl_resume()  
+            ret = srv.success
         return ret
 
     def get_drl_state():
     # ROS service call
         if __ROS__:
-            ret = self._ros_get_drl_state()  
+            srv = self._ros_get_drl_state()  
+            ret = srv.success
         return ret
