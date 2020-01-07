@@ -299,35 +299,60 @@ namespace dsr_control{
 
     void DRHWInterface::OnLogAlarm(LPLOG_ALARM pLogAlarm)
     {
-        //This function is called when an error occurs.    
-        ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();  
-        ros::Publisher PubRobotError = node->advertise<dsr_msgs::RobotError>("error",100);
+        //This function is called when an error occurs.
+        ros::NodeHandlePtr node=boost::make_shared<ros::NodeHandle>();
+        ros::Publisher PubRobotError=node->advertise<dsr_msgs::RobotError>("error",100);
         dsr_msgs::RobotError msg;
 
-        ROS_ERROR("[callback OnLogAlarm]");
-        ROS_ERROR("  level : %d",(unsigned int)pLogAlarm->_iLevel );
-        ROS_ERROR("  group : %d",(unsigned int)pLogAlarm->_iGroup );
-        ROS_ERROR("  index : %d", pLogAlarm->_iIndex );
-        ROS_ERROR("  param : %s", pLogAlarm->_szParam[0] );
-        ROS_ERROR("  param : %s", pLogAlarm->_szParam[1] );
-        ROS_ERROR("  param : %s", pLogAlarm->_szParam[2] );
+        switch(pLogAlarm->_iLevel)
+        {
+        case LOG_LEVEL_SYSINFO:
+            ROS_INFO("[callback OnLogAlarm]");
+            ROS_INFO(" level : %d",(unsigned int)pLogAlarm->_iLevel);
+            ROS_INFO(" group : %d",(unsigned int)pLogAlarm->_iGroup);
+            ROS_INFO(" index : %d", pLogAlarm->_iIndex);
+            ROS_INFO(" param : %s", pLogAlarm->_szParam[0] );
+            ROS_INFO(" param : %s", pLogAlarm->_szParam[1] );
+            ROS_INFO(" param : %s", pLogAlarm->_szParam[2] );
+            break;
+        case LOG_LEVEL_SYSWARN:
+            ROS_WARN("[callback OnLogAlarm]");
+            ROS_WARN(" level : %d",(unsigned int)pLogAlarm->_iLevel);
+            ROS_WARN(" group : %d",(unsigned int)pLogAlarm->_iGroup);
+            ROS_WARN(" index : %d", pLogAlarm->_iIndex);
+            ROS_WARN(" param : %s", pLogAlarm->_szParam[0] );
+            ROS_WARN(" param : %s", pLogAlarm->_szParam[1] );
+            ROS_WARN(" param : %s", pLogAlarm->_szParam[2] );
+            break;
+        case LOG_LEVEL_SYSERROR:
+        default:
+            ROS_ERROR("[callback OnLogAlarm]");
+            ROS_ERROR(" level : %d",(unsigned int)pLogAlarm->_iLevel);
+            ROS_ERROR(" group : %d",(unsigned int)pLogAlarm->_iGroup);
+            ROS_ERROR(" index : %d", pLogAlarm->_iIndex);
+            ROS_ERROR(" param : %s", pLogAlarm->_szParam[0] );
+            ROS_ERROR(" param : %s", pLogAlarm->_szParam[1] );
+            ROS_ERROR(" param : %s", pLogAlarm->_szParam[2] );
+            break;
+        }
 
-        g_stDrError.nLevel = (unsigned int)pLogAlarm->_iLevel;
-        g_stDrError.nGroup = (unsigned int)pLogAlarm->_iGroup;
-        g_stDrError.nCode  = pLogAlarm->_iIndex;
-        strncpy(g_stDrError.strMsg1, pLogAlarm->_szParam[0], MAX_STRING_SIZE); 
-        strncpy(g_stDrError.strMsg2, pLogAlarm->_szParam[1], MAX_STRING_SIZE); 
-        strncpy(g_stDrError.strMsg3, pLogAlarm->_szParam[2], MAX_STRING_SIZE); 
+        g_stDrError.nLevel=(unsigned int)pLogAlarm->_iLevel;
+        g_stDrError.nGroup=(unsigned int)pLogAlarm->_iGroup;
+        g_stDrError.nCode=pLogAlarm->_iIndex;
+        strncpy(g_stDrError.strMsg1, pLogAlarm->_szParam[0], MAX_STRING_SIZE);
+        strncpy(g_stDrError.strMsg2, pLogAlarm->_szParam[1], MAX_STRING_SIZE);
+        strncpy(g_stDrError.strMsg3, pLogAlarm->_szParam[2], MAX_STRING_SIZE);
 
-        msg.level = g_stDrError.nLevel;
-        msg.group = g_stDrError.nGroup;
-        msg.code  = g_stDrError.nCode;
-        msg.msg1  = g_stDrError.strMsg1;  
-        msg.msg2  = g_stDrError.strMsg2;
-        msg.msg3  = g_stDrError.strMsg3;
+        msg.level=g_stDrError.nLevel;
+        msg.group=g_stDrError.nGroup;
+        msg.code=g_stDrError.nCode;
+        msg.msg1=g_stDrError.strMsg1;
+        msg.msg2=g_stDrError.strMsg2;
+        msg.msg3=g_stDrError.strMsg3;
 
         PubRobotError.publish(msg);
     }
+
     //----- register the call-back functions end -------------------------------------
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -517,6 +542,8 @@ namespace dsr_control{
         // Publisher msg 
         m_PubRobotState = private_nh_.advertise<dsr_msgs::RobotState>("state",100);
         m_PubRobotError = private_nh_.advertise<dsr_msgs::RobotError>("error",100);
+        ///m_PubJogMultiAxis = private_nh_.advertise<dsr_msgs::JogMultiAxis>("jog_multi",100);
+
         // gazebo에 joint position 전달
         m_PubtoGazebo = private_nh_.advertise<std_msgs::Float64MultiArray>("/dsr_joint_position_controller/command",10);
         // moveit의 trajectory/goal를 받아 제어기로 전달
@@ -527,7 +554,10 @@ namespace dsr_control{
         ros::NodeHandle nh_temp;
         m_SubSerialRead = nh_temp.subscribe("serial_read", 100, &Serial_comm::read_callback, &ser_comm);
         m_PubSerialWrite = nh_temp.advertise<std_msgs::String>("serial_write", 100);
-        
+
+        // subscribe : Multi-JOG topic msg
+        m_sub_jog_multi_axis = private_nh_.subscribe("jog_multi", 10, &DRHWInterface::jogCallback, this);  
+
         // system Operations
         m_nh_system[0] = private_nh_.advertiseService("system/set_robot_mode", &DRHWInterface::set_robot_mode_cb, this);
         m_nh_system[1] = private_nh_.advertiseService("system/get_robot_mode", &DRHWInterface::get_robot_mode_cb, this);
@@ -539,6 +569,12 @@ namespace dsr_control{
         m_nh_system[7] = private_nh_.advertiseService("system/get_current_solution_space", &DRHWInterface::get_current_solution_space_cb, this);
         m_nh_system[8] = private_nh_.advertiseService("system/set_safe_stop_reset_type", &DRHWInterface::set_safe_stop_reset_type_cb, this);
         m_nh_system[9] = private_nh_.advertiseService("system/get_last_alarm", &DRHWInterface::get_last_alarm_cb, this);
+        m_nh_system[10]= private_nh_.advertiseService("system/get_robot_state", &DRHWInterface::get_robot_state_cb, this);
+
+        m_nh_system[11]= private_nh_.advertiseService("system/get_external_torque", &DRHWInterface::get_external_torque_cb, this);
+        m_nh_system[12]= private_nh_.advertiseService("system/get_joint_torque", &DRHWInterface::get_joint_torque_cb, this);
+        m_nh_system[13]= private_nh_.advertiseService("system/get_tool_force", &DRHWInterface::get_tool_force_cb, this);
+
         //  motion Operations
         m_nh_move_service[0] = private_nh_.advertiseService("motion/move_joint", &DRHWInterface::movej_cb, this);
         m_nh_move_service[1] = private_nh_.advertiseService("motion/move_line", &DRHWInterface::movel_cb, this);
@@ -551,6 +587,10 @@ namespace dsr_control{
         m_nh_move_service[8] = private_nh_.advertiseService("motion/move_periodic", &DRHWInterface::moveperiodic_cb, this);
         m_nh_move_service[9] = private_nh_.advertiseService("motion/move_wait", &DRHWInterface::movewait_cb, this);
         m_nh_move_service[10]= private_nh_.advertiseService("motion/jog", &DRHWInterface::jog_cb, this);
+        m_nh_move_service[11]= private_nh_.advertiseService("motion/jog_multi", &DRHWInterface::jog_multi_cb, this);
+        m_nh_move_service[12]= private_nh_.advertiseService("motion/move_stop", &DRHWInterface::move_stop_cb, this);
+        m_nh_move_service[13]= private_nh_.advertiseService("motion/move_pause", &DRHWInterface::move_pause_cb, this);
+        m_nh_move_service[14]= private_nh_.advertiseService("motion/move_resume", &DRHWInterface::move_resume_cb, this);
         //  GPIO Operations
         m_nh_io_service[0] = private_nh_.advertiseService("io/set_digital_output", &DRHWInterface::set_digital_output_cb, this);
         m_nh_io_service[1] = private_nh_.advertiseService("io/get_digital_input", &DRHWInterface::get_digital_input_cb, this);
@@ -621,7 +661,7 @@ namespace dsr_control{
     {
         ROS_INFO("[dsr_hw_interface] init() ==> setup callback fucntion");
         int nServerPort = 12345;
-        ROS_INFO("INIT@@@@@@@@@@@@@@@@@@@@@@@@@2");
+        ROS_INFO("INIT@@@@@@@@@@@@@@@@@@@@@@@@@");
         //--- doosan API's call-back fuctions : Only work within 50msec in call-back functions
         Drfl.SetOnTpInitializingCompleted(OnTpInitializingCompletedCB);
         Drfl.SetOnHommingCompleted(OnHommingCompletedCB);
@@ -653,6 +693,14 @@ namespace dsr_control{
             ROS_INFO("DRCF version = %s",tSysVerion._szController);
             ROS_INFO("DRFL version = %s",Drfl.GetLibraryVersion());
 
+            //--- Get DRCF version & convert to integer  ---            
+            m_nVersionDRCF = 0; 
+            int k=0;
+            for(int i=strlen(tSysVerion._szController); i>0; i--)
+                if(tSysVerion._szController[i]>='0' && tSysVerion._szController[i]<='9')
+                    m_nVersionDRCF += (tSysVerion._szController[i]-'0')*pow(10.0,k++);
+            ROS_INFO("m_nVersionDRCF = %d\n", m_nVersionDRCF);   
+
             //--- Check Robot State : STATE_STANDBY ---               
             int delay;
             ros::param::param<int>("~standby", delay, 5000);
@@ -660,8 +708,9 @@ namespace dsr_control{
                 usleep(delay);
             }
 
-            //--- Set Robot mode : MANUAL
-            assert(Drfl.SetRobotMode(ROBOT_MODE_MANUAL));
+            //--- Set Robot mode : MANUAL or AUTO
+            //assert(Drfl.SetRobotMode(ROBOT_MODE_MANUAL));
+            assert(Drfl.SetRobotMode(ROBOT_MODE_AUTONOMOUS));
 
             //--- Set Robot mode : virual or real 
             ROBOT_SYSTEM eTargetSystem = ROBOT_SYSTEM_VIRTUAL;
@@ -738,14 +787,28 @@ namespace dsr_control{
         pubRobotStop.publish(msg);
 
         ROS_INFO("[sigint_hangler] CloseConnection");
-        ROS_INFO("[sigint_hangler] CloseConnection");
-        ROS_INFO("[sigint_hangler] CloseConnection");
     }
     void DRHWInterface::positionCallback(const std_msgs::Float64MultiArray::ConstPtr& msg){
         ROS_INFO("callback: Position received");
         std::array<float, NUM_JOINT> target_pos;
         std::copy(msg->data.cbegin(), msg->data.cend(), target_pos.begin());
         Drfl.MoveJAsync(target_pos.data(), 50, 50);
+    }
+
+    void DRHWInterface::jogCallback(const dsr_msgs::JogMultiAxis::ConstPtr& msg){
+        //ROS_INFO("callback: jogCallback received");
+
+        std::array<float, NUM_JOINT> target_pos;
+        std::copy(msg->jog_axis.cbegin(), msg->jog_axis.cend(), target_pos.begin());       
+        msg->move_reference;
+        msg->speed;
+
+        //ROS_INFO("jog_axis = %f,%f,%f,%f,%f,%f", target_pos[0],target_pos[1],target_pos[2],target_pos[3],target_pos[4],target_pos[5]);
+        //ROS_INFO("move_reference = %d", msg->move_reference);
+        //ROS_INFO("speed = %f", msg->speed);
+
+        Drfl.MultiJog(target_pos.data(), (MOVE_REFERENCE)msg->move_reference, msg->speed);
+
     }
 
     void DRHWInterface::trajectoryCallback(const control_msgs::FollowJointTrajectoryActionGoal::ConstPtr& msg)
@@ -825,6 +888,9 @@ namespace dsr_control{
     bool DRHWInterface::get_robot_system_cb(dsr_msgs::GetRobotSystem::Request& req, dsr_msgs::GetRobotSystem::Response& res){
         res.robot_system = Drfl.GetRobotSystem();
     }
+    bool DRHWInterface::get_robot_state_cb(dsr_msgs::GetRobotState::Request& req, dsr_msgs::GetRobotState::Response& res){
+        res.robot_state = Drfl.GetRobotState();
+    }
     bool DRHWInterface::set_robot_speed_mode_cb(dsr_msgs::SetRobotSpeedMode::Request& req, dsr_msgs::SetRobotSpeedMode::Response& res){
         res.success = Drfl.SetRobotSpeedMode((SPEED_MODE)req.speed_mode);
     }
@@ -850,6 +916,21 @@ namespace dsr_control{
         for(int i = 0; i < 3; i++){
             std::string str_temp(Drfl.GetLastAlarm()->_szParam[i]);
             res.log_alarm.param[i] = str_temp;
+        }
+    }
+    bool DRHWInterface::get_external_torque_cb(dsr_msgs::GetExternalTorque::Request& req, dsr_msgs::GetExternalTorque::Response& res){
+        for(int i = 0; i < NUM_TASK; i++){
+            res.ext_torque[i] = g_stDrState.fActualEJT[i];
+        }
+    }
+    bool DRHWInterface::get_joint_torque_cb(dsr_msgs::GetJointTorque::Request& req, dsr_msgs::GetJointTorque::Response& res){
+        for(int i = 0; i < NUM_TASK; i++){
+            res.joint_torque[i] = g_stDrState.fActualJTS[i];
+        }
+    }
+    bool DRHWInterface::get_tool_force_cb(dsr_msgs::GetToolForce::Request& req, dsr_msgs::GetToolForce::Response& res){
+        for(int i = 0; i < NUM_TASK; i++){
+            res.tool_force[i] = g_stDrState.fActualETT[i];
         }
     }
 
@@ -1049,46 +1130,84 @@ namespace dsr_control{
 
     bool DRHWInterface::jog_cb(dsr_msgs::Jog::Request& req, dsr_msgs::Jog::Response& res)
     {
+        ROS_INFO("DRHWInterface::jog_cb() called and calling Drfl.Jog");
+        ROS_INFO("req.jog_axis = %d, req.move_reference=%d req.speed=%f",req.jog_axis, req.move_reference, req.speed);    
+
         res.success = Drfl.Jog((JOG_AXIS)req.jog_axis, (MOVE_REFERENCE)req.move_reference, req.speed);
     }
+
+    bool DRHWInterface::jog_multi_cb(dsr_msgs::JogMulti::Request& req, dsr_msgs::JogMulti::Response& res)
+    {
+        ROS_INFO("DRHWInterface::jog_multi_cb() called and calling Drfl.MultiJog");
+        ROS_INFO("req.jog_axis = %f,%f,%f,%f,%f,%f",req.jog_axis[0],req.jog_axis[1],req.jog_axis[2],req.jog_axis[3],req.jog_axis[4],req.jog_axis[5]);    
+
+        std::array<float, NUM_JOINT> target_jog;
+        std::copy(req.jog_axis.cbegin(), req.jog_axis.cend(), target_jog.begin());
+
+        res.success = Drfl.MultiJog(target_jog.data(), (MOVE_REFERENCE)req.move_reference, req.speed);
+    }
+
+    bool DRHWInterface::move_stop_cb(dsr_msgs::MoveStop::Request& req, dsr_msgs::MoveStop::Response& res)
+    {
+        res.success = Drfl.MoveStop((STOP_TYPE)req.stop_mode);
+    }
+
+    bool DRHWInterface::move_resume_cb(dsr_msgs::MoveResume::Request& req, dsr_msgs::MoveResume::Response& res)
+    {
+        res.success = Drfl.MoveResume();
+    }
+    
+    bool DRHWInterface::move_pause_cb(dsr_msgs::MovePause::Request& req, dsr_msgs::MovePause::Response& res)
+    {
+        res.success = Drfl.MovePause();
+    }
+
     bool DRHWInterface::set_digital_output_cb(dsr_msgs::SetCtrlBoxDigitalOutput::Request& req, dsr_msgs::SetCtrlBoxDigitalOutput::Response& res)
     {
         //ROS_INFO("DRHWInterface::set_digital_output_cb() called and calling Drfl.SetCtrlBoxDigitalOutput");
+        req.index -=1;
         res.success = Drfl.SetCtrlBoxDigitalOutput((GPIO_CTRLBOX_DIGITAL_INDEX)req.index, req.value);
     }
     bool DRHWInterface::get_digital_input_cb(dsr_msgs::GetCtrlBoxDigitalInput::Request& req, dsr_msgs::GetCtrlBoxDigitalInput::Response& res)
     {
         //ROS_INFO("DRHWInterface::get_digital_input_cb() called and calling Drfl.GetCtrlBoxDigitalInput");
+        req.index -=1;
         res.value = Drfl.GetCtrlBoxDigitalInput((GPIO_CTRLBOX_DIGITAL_INDEX)req.index);
     }
     bool DRHWInterface::set_tool_digital_output_cb(dsr_msgs::SetToolDigitalOutput::Request& req, dsr_msgs::SetToolDigitalOutput::Response& res)
     {
         //ROS_INFO("DRHWInterface::set_tool_digital_output_cb() called and calling Drfl.SetToolDigitalOutput");
+        req.index -=1;
         res.success = Drfl.SetToolDigitalOutput((GPIO_TOOL_DIGITAL_INDEX)req.index, req.value);
     }
     bool DRHWInterface::get_tool_digital_input_cb(dsr_msgs::GetToolDigitalInput::Request& req, dsr_msgs::GetToolDigitalInput::Response& res)
     {
         //ROS_INFO("DRHWInterface::get_tool_digital_input_cb() called and calling Drfl.GetToolDigitalInput");
+        req.index -=1;
         res.value = Drfl.GetToolDigitalInput((GPIO_TOOL_DIGITAL_INDEX)req.index);
     }
     bool DRHWInterface::set_analog_output_cb(dsr_msgs::SetCtrlBoxAnalogOutput::Request& req, dsr_msgs::SetCtrlBoxAnalogOutput::Response& res)
     {
         //ROS_INFO("DRHWInterface::set_analog_output_cb() called and calling Drfl.SetCtrlBoxAnalogOutput");
+        req.channel -=1;
         res.success = Drfl.SetCtrlBoxAnalogOutput((GPIO_CTRLBOX_ANALOG_INDEX)req.channel, req.value);
     }
     bool DRHWInterface::get_analog_input_cb(dsr_msgs::GetCtrlBoxAnalogInput::Request& req, dsr_msgs::GetCtrlBoxAnalogInput::Response& res)
     {
         //ROS_INFO("DRHWInterface::get_analog_input_cb() called and calling Drfl.GetCtrlBoxAnalogInput");
+        req.channel -=1;
         res.value = Drfl.GetCtrlBoxAnalogInput((GPIO_CTRLBOX_ANALOG_INDEX)req.channel);
     }
     bool DRHWInterface::set_analog_output_type_cb(dsr_msgs::SetCtrlBoxAnalogOutputType::Request& req, dsr_msgs::SetCtrlBoxAnalogOutputType::Response& res)
     {
         //ROS_INFO("DRHWInterface::set_analog_output_type_cb() called and calling Drfl.SetCtrlBoxAnalogOutputType");
+        req.channel -=1;
         res.success = Drfl.SetCtrlBoxAnalogOutputType((GPIO_CTRLBOX_ANALOG_INDEX)req.channel, (GPIO_ANALOG_TYPE)req.mode);
     }
     bool DRHWInterface::set_analog_input_type_cb(dsr_msgs::SetCtrlBoxAnalogInputType::Request& req, dsr_msgs::SetCtrlBoxAnalogInputType::Response& res)
     {
         //ROS_INFO("DRHWInterface::set_analog_input_type_cb() called and calling Drfl.SetCtrlBoxAnalogInputType");
+        req.channel -=1;
         res.success = Drfl.SetCtrlBoxAnalogInputType((GPIO_CTRLBOX_ANALOG_INDEX)req.channel, (GPIO_ANALOG_TYPE)req.mode);
     }
     bool DRHWInterface::set_modbus_output_cb(dsr_msgs::SetModbusOutput::Request& req, dsr_msgs::SetModbusOutput::Response& res)
@@ -1104,7 +1223,10 @@ namespace dsr_control{
     bool DRHWInterface::config_create_modbus_cb(dsr_msgs::ConfigCreateModbus::Request& req, dsr_msgs::ConfigCreateModbus::Response& res)
     {
         //ROS_INFO("DRHWInterface::config_create_modbus_cb() called and calling Drfl.ConfigCreateModbus");
-        res.success = Drfl.ConfigCreateModbus(req.name, req.ip, (unsigned short)req.port, (MODBUS_REGISTER_TYPE)req.reg_type, (unsigned short)req.index, (unsigned short)req.value);
+        if(m_nVersionDRCF >= 20400)
+            res.success = Drfl.ConfigCreateModbusEx(req.name, req.ip, (unsigned short)req.port, (MODBUS_REGISTER_TYPE)req.reg_type, (unsigned short)req.index, (unsigned short)req.value, (int)req.slave_id);
+        else 
+            res.success = Drfl.ConfigCreateModbus(req.name, req.ip, (unsigned short)req.port, (MODBUS_REGISTER_TYPE)req.reg_type, (unsigned short)req.index, (unsigned short)req.value);
     }
     bool DRHWInterface::config_delete_modbus_cb(dsr_msgs::ConfigDeleteModbus::Request& req, dsr_msgs::ConfigDeleteModbus::Response& res)
     {
