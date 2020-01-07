@@ -9,7 +9,7 @@ import os
 import threading, time
 import sys
 sys.dont_write_bytecode = True
-sys.path.append( os.path.abspath(os.path.join(os.path.dirname(__file__),"../../../common/imp")) ) # get import pass : DSR_ROBOT.py 
+sys.path.append( os.path.abspath(os.path.join(os.path.dirname(__file__),"../../../../common/imp")) ) # get import pass : DSR_ROBOT.py 
 
 # for single robot 
 ROBOT_ID     = "dsr01"
@@ -43,7 +43,7 @@ def msgRobotState_cb(msg):
         #print("  access_control    : %d" % (msg.access_control))
         #print("  homming_completed : %d" % (msg.homming_completed))
         #print("  tp_initialized    : %d" % (msg.tp_initialized))
-        print("  speed             : %d" % (msg.speed))
+        #print("  speed             : %d" % (msg.speed))
         #print("  mastering_need    : %d" % (msg.mastering_need))
         #print("  drl_stopped       : %d" % (msg.drl_stopped))
         #print("  disconnected      : %d" % (msg.disconnected))
@@ -58,9 +58,9 @@ if __name__ == "__main__":
     rospy.init_node('dsr_simple_test_py')
     rospy.on_shutdown(shutdown)
 
-    t1 = threading.Thread(target=thread_subscriber)
-    t1.daemon = True 
-    t1.start()
+    #t1 = threading.Thread(target=thread_subscriber)
+    #t1.daemon = True 
+    #t1.start()
 
     pub_stop = rospy.Publisher('/'+ROBOT_ID +ROBOT_MODEL+'/stop', RobotStop, queue_size=10)           
 
