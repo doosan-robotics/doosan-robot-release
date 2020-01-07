@@ -1,0 +1,12 @@
+Source: ros-kinetic-moveit-config-m0609
+Section: misc
+Priority: optional
+Maintainer: jinhyuk.gong <jinhyuk.gong@doosan.com>
+Build-Depends: debhelper (>= 9.0.0), ros-kinetic-catkin, ros-kinetic-dsr-description
+Homepage: http://moveit.ros.org/
+Standards-Version: 3.9.2
+
+Package: ros-kinetic-moveit-config-m0609
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-kinetic-dsr-description, ros-kinetic-joint-state-publisher, ros-kinetic-moveit-fake-controller-manager, ros-kinetic-moveit-kinematics, ros-kinetic-moveit-planners-ompl, ros-kinetic-moveit-ros-move-group, ros-kinetic-moveit-ros-visualization, ros-kinetic-moveit-setup-assistant, ros-kinetic-robot-state-publisher, ros-kinetic-xacro
+Description: An automatically generated package with all the configuration and launch files for using the m0609 with the MoveIt! Motion Planning Framework
